@@ -4,7 +4,7 @@ pub trait Draw {
     fn draw(&self, cx: &CX);
 }
 
-pub trait ViewSize {
+pub trait AnyView {
     fn size(&self) -> Size;
 }
 
@@ -18,6 +18,15 @@ pub struct Position {
 pub struct Size {
     pub width: i32,
     pub height: i32,
+}
+
+#[derive(Copy, Clone, Default)]
+pub struct ViewBase {
+    pub size: Size,
+    pub padding_top: i32,
+    pub padding_bottom: i32,
+    pub padding_left: i32,
+    pub padding_right: i32,
 }
 
 impl std::fmt::Display for Position {

@@ -1,16 +1,18 @@
 mod draw;
 use draw::*;
 
-use macros::ViewSize;
+use macros::AnyView;
 
-#[derive(ViewSize)]
+#[derive(AnyView)]
 pub struct VStack {
-    size: Size,
+    view_base: ViewBase,
+    spacing: i32,
     elements: Vec<Box<dyn Draw>>,
 }
 
 impl VStack {
-    pub fn spacing(self, distance: i32) -> Self {
+    pub fn spacing(mut self, distance: i32) -> Self {
+        self.spacing = distance;
         println!("spacing: {}", distance);
         self
     }
@@ -26,25 +28,26 @@ impl Draw for VStack {
 
 pub fn vstack<T: DrawGroup>(elements: T) -> VStack {
     VStack {
-        size: Size::default(),
+        view_base: ViewBase::default(),
+        spacing: i32::default(),
         elements: elements.into_draw_group(),
     }
 }
 
-#[derive(Copy, Clone, Default, ViewSize)]
+#[derive(Copy, Clone, Default, AnyView)]
 pub struct Rectangle {
-    size: Size,
+    view_base: ViewBase,
 }
 
 impl Draw for Rectangle {
     fn draw(&self, _cx: &CX) {
-        println!("rectangle: {}", self.size);
+        println!("rectangle: {}", self.size());
     }
 }
 
-#[derive(Copy, Clone, Default, ViewSize)]
+#[derive(Copy, Clone, Default, AnyView)]
 pub struct Circle {
-    size: Size,
+    view_base: ViewBase,
 }
 
 impl Draw for Circle {
