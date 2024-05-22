@@ -1,13 +1,13 @@
 mod draw;
 use draw::*;
 
-use macros::AnyView;
+use macros::*;
 
-#[derive(AnyView)]
+#[derive(ViewBase)]
 pub struct VStack {
-    view_base: ViewBase,
+    view_base: view::Base,
     spacing: i32,
-    elements: Vec<Box<dyn Draw>>,
+    elements: Vec<Box<dyn view::AnyView>>,
 }
 
 impl VStack {
@@ -18,7 +18,7 @@ impl VStack {
     }
 }
 
-impl Draw for VStack {
+impl view::Draw for VStack {
     fn draw(&self, cx: &CX) {
         for element in &self.elements {
             element.draw(cx)
@@ -26,57 +26,56 @@ impl Draw for VStack {
     }
 }
 
-pub fn vstack<T: DrawGroup>(elements: T) -> VStack {
+pub fn vstack<T: view::Group>(elements: T) -> VStack {
     VStack {
-        view_base: ViewBase::default(),
+        view_base: view::Base::default(),
         spacing: i32::default(),
         elements: elements.into_draw_group(),
     }
 }
 
-#[derive(Copy, Clone, Default, AnyView)]
+#[derive(Copy, Clone, Default, ViewBase)]
 pub struct Rectangle {
-    view_base: ViewBase,
+    view_base: view::Base,
 }
 
-impl Draw for Rectangle {
+impl view::Draw for Rectangle {
     fn draw(&self, _cx: &CX) {
         println!("rectangle: {}", self.size());
     }
 }
 
-#[derive(Copy, Clone, Default, AnyView)]
+#[derive(Copy, Clone, Default, ViewBase)]
 pub struct Circle {
-    view_base: ViewBase,
+    view_base: view::Base,
 }
 
-impl Draw for Circle {
+impl view::Draw for Circle {
     fn draw(&self, _cx: &CX) {
         println!("circle: {}", self.size());
     }
 }
 
 #[rustfmt::skip]
-fn canvas() -> impl Draw {
+fn canvas() -> impl view::Draw {
     vstack((
         Rectangle::default()
-            .size(Size {width: 100, height: 100}), 
+            .size(view::Size {width: 100, height: 100}), 
 
         Circle::default()
-            .size(Size {width: 100, height: 100}),
+            .size(view::Size {width: 100, height: 100}),
 
         vstack((
             Rectangle::default()
-                .size(Size {width: 200, height: 200}),
+                .size(view::Size {width: 200, height: 200}),
 
             Circle::default()
-                .size(Size {width: 200, height: 200}),
+                .size(view::Size {width: 200, height: 200}),
         ))
         .spacing(5)
-
     ))
     .spacing(10)
-    .size(Size {width: 400, height: 400})
+    .size(view::Size {width: 400, height: 400})
 }
 
 fn main() {
