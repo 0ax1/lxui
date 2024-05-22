@@ -2,6 +2,9 @@ pub struct CX;
 
 pub trait Draw {
     fn draw(&self, cx: &CX);
+}
+
+pub trait ViewSize {
     fn size(&self) -> Size;
 }
 

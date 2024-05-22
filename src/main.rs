@@ -1,17 +1,15 @@
 mod draw;
 use draw::*;
 
+use macros::ViewSize;
+
+#[derive(ViewSize)]
 pub struct VStack {
     size: Size,
     elements: Vec<Box<dyn Draw>>,
 }
 
 impl VStack {
-    fn size(mut self, size: Size) -> Self {
-        self.size = size;
-        self
-    }
-
     pub fn spacing(self, distance: i32) -> Self {
         println!("spacing: {}", distance);
         self
@@ -19,10 +17,6 @@ impl VStack {
 }
 
 impl Draw for VStack {
-    fn size(&self) -> Size {
-        self.size
-    }
-
     fn draw(&self, cx: &CX) {
         for element in &self.elements {
             element.draw(cx)
@@ -37,45 +31,23 @@ pub fn vstack<T: DrawGroup>(elements: T) -> VStack {
     }
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, ViewSize)]
 pub struct Rectangle {
     size: Size,
 }
 
-impl Rectangle {
-    fn size(mut self, size: Size) -> Self {
-        self.size = size;
-        self
-    }
-}
-
 impl Draw for Rectangle {
-    fn size(&self) -> Size {
-        self.size
-    }
-
     fn draw(&self, _cx: &CX) {
-        println!("rectangle: {}", self.size());
+        println!("rectangle: {}", self.size);
     }
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, ViewSize)]
 pub struct Circle {
     size: Size,
 }
 
-impl Circle {
-    fn size(mut self, size: Size) -> Self {
-        self.size = size;
-        self
-    }
-}
-
 impl Draw for Circle {
-    fn size(&self) -> Size {
-        self.size
-    }
-
     fn draw(&self, _cx: &CX) {
         println!("circle: {}", self.size());
     }
