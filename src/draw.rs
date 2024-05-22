@@ -19,8 +19,6 @@ pub mod view {
         fn padding_bottom(&self) -> i32;
         fn padding_left(&self) -> i32;
         fn padding_right(&self) -> i32;
-        fn padding_horizontal(&self) -> (i32, i32);
-        fn padding_vertical(&self) -> (i32, i32);
     }
 
     #[derive(Debug, Copy, Clone, Default)]

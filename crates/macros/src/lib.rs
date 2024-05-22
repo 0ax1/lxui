@@ -76,14 +76,6 @@ pub fn derive_draw_size(input: TokenStream) -> TokenStream {
             fn padding_right(&self) -> i32 {
                 self.view_base.padding_right
             }
-
-            fn padding_horizontal(&self) -> (i32, i32) {
-                (self.view_base.padding_left, self.view_base.padding_right)
-            }
-
-            fn padding_vertical(&self) -> (i32, i32) {
-                (self.view_base.padding_top, self.view_base.padding_bottom)
-            }
         }
 
         impl View for #name{}

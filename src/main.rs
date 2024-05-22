@@ -36,6 +36,72 @@ pub fn vstack<T: view::Group>(elements: T) -> VStack {
     }
 }
 
+#[derive(ViewBase)]
+pub struct HStack {
+    view_base: view::Base,
+    spacing: i32,
+    elements: Vec<Box<dyn view::View>>,
+}
+
+impl HStack {
+    pub fn spacing(mut self, distance: i32) -> Self {
+        self.spacing = distance;
+        println!("spacing: {}", distance);
+        self
+    }
+}
+
+impl view::Draw for HStack {
+    fn draw(&self, cx: &CX) {
+        for element in &self.elements {
+            if element.visible() {
+                element.draw(cx)
+            }
+        }
+    }
+}
+
+pub fn hstack<T: view::Group>(elements: T) -> HStack {
+    HStack {
+        view_base: view::Base::default(),
+        spacing: i32::default(),
+        elements: elements.into_view_group(),
+    }
+}
+
+#[derive(ViewBase)]
+pub struct ZStack {
+    view_base: view::Base,
+    spacing: i32,
+    elements: Vec<Box<dyn view::View>>,
+}
+
+impl ZStack {
+    pub fn spacing(mut self, distance: i32) -> Self {
+        self.spacing = distance;
+        println!("spacing: {}", distance);
+        self
+    }
+}
+
+impl view::Draw for ZStack {
+    fn draw(&self, cx: &CX) {
+        for element in &self.elements {
+            if element.visible() {
+                element.draw(cx)
+            }
+        }
+    }
+}
+
+pub fn zstack<T: view::Group>(elements: T) -> ZStack {
+    ZStack {
+        view_base: view::Base::default(),
+        spacing: i32::default(),
+        elements: elements.into_view_group(),
+    }
+}
+
 #[derive(Default, ViewBase)]
 pub struct Rectangle {
     view_base: view::Base,
@@ -61,14 +127,16 @@ impl view::Draw for Circle {
 #[rustfmt::skip]
 fn canvas() -> impl view::Draw {
     vstack((
-        Rectangle::default()
-            .size(100, 100),
+        hstack((
+            Rectangle::default()
+                .size(100, 100),
 
-        Circle::default()
-            .size(100, 100)
-            .visible(false),
+            Circle::default()
+                .size(100, 100)
+                .visible(false)
+        )),
 
-        vstack((
+        hstack((
             Rectangle::default()
                 .size(200, 200)
                 .padding_vertical(10, 10),
