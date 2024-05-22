@@ -34,7 +34,7 @@ pub fn vstack<T: view::Group>(elements: T) -> VStack {
     }
 }
 
-#[derive(Copy, Clone, Default, ViewBase)]
+#[derive(Default, ViewBase)]
 pub struct Rectangle {
     view_base: view::Base,
 }
@@ -45,7 +45,7 @@ impl view::Draw for Rectangle {
     }
 }
 
-#[derive(Copy, Clone, Default, ViewBase)]
+#[derive(Default, ViewBase)]
 pub struct Circle {
     view_base: view::Base,
 }
