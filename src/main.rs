@@ -21,7 +21,9 @@ impl VStack {
 impl view::Draw for VStack {
     fn draw(&self, cx: &CX) {
         for element in &self.elements {
-            element.draw(cx)
+            if element.visible() {
+                element.draw(cx)
+            }
         }
     }
 }
@@ -60,17 +62,20 @@ impl view::Draw for Circle {
 fn canvas() -> impl view::Draw {
     vstack((
         Rectangle::default()
-            .size(view::Size {width: 100, height: 100}), 
+           .size(view::Size {width: 100, height: 100}),
 
         Circle::default()
-            .size(view::Size {width: 100, height: 100}),
+            .size(view::Size {width: 100, height: 100})
+            .visible(false),
 
         vstack((
             Rectangle::default()
-                .size(view::Size {width: 200, height: 200}),
+                .size(view::Size {width: 200, height: 200})
+                .padding_vertical((10, 10)),
 
             Circle::default()
-                .size(view::Size {width: 200, height: 200}),
+                .size(view::Size {width: 200, height: 200})
+                .padding_horizontal((10, 10)),
         ))
         .spacing(5)
     ))

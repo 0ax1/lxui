@@ -1,6 +1,6 @@
 pub struct CX;
 
-pub use self::view::{View, Draw, ViewBase};
+pub use self::view::{Draw, View, ViewBase};
 
 pub mod view {
     use super::*;
@@ -13,6 +13,14 @@ pub mod view {
 
     pub trait ViewBase {
         fn size(&self) -> Size;
+        fn visible(&self) -> bool;
+
+        fn padding_top(&self) -> i32;
+        fn padding_bottom(&self) -> i32;
+        fn padding_left(&self) -> i32;
+        fn padding_right(&self) -> i32;
+        fn padding_horizontal(&self) -> (i32, i32);
+        fn padding_vertical(&self) -> (i32, i32);
     }
 
     #[derive(Debug, Copy, Clone, Default)]
@@ -27,13 +35,27 @@ pub mod view {
         pub height: i32,
     }
 
-    #[derive(Copy, Clone, Default)]
+    #[derive(Copy, Clone)]
     pub struct Base {
         pub size: Size,
+        pub visible: bool,
         pub padding_top: i32,
         pub padding_bottom: i32,
         pub padding_left: i32,
         pub padding_right: i32,
+    }
+
+    impl Default for Base {
+        fn default() -> Self {
+            Self {
+                size: Size::default(),
+                visible: true,
+                padding_top: 0,
+                padding_bottom: 0,
+                padding_left: 0,
+                padding_right: 0,
+            }
+        }
     }
 
     impl std::fmt::Display for Position {
