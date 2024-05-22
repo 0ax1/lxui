@@ -29,7 +29,7 @@ pub mod view {
         pub y: i32,
     }
 
-    #[derive(Debug, Copy, Clone, Default)]
+    #[derive(Copy, Clone, Default)]
     pub struct Size {
         pub width: i32,
         pub height: i32,

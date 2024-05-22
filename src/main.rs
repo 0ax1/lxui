@@ -62,25 +62,25 @@ impl view::Draw for Circle {
 fn canvas() -> impl view::Draw {
     vstack((
         Rectangle::default()
-           .size(view::Size {width: 100, height: 100}),
+            .size(100, 100),
 
         Circle::default()
-            .size(view::Size {width: 100, height: 100})
+            .size(100, 100)
             .visible(false),
 
         vstack((
             Rectangle::default()
-                .size(view::Size {width: 200, height: 200})
-                .padding_vertical((10, 10)),
+                .size(200, 200)
+                .padding_vertical(10, 10),
 
             Circle::default()
-                .size(view::Size {width: 200, height: 200})
-                .padding_horizontal((10, 10)),
+                .size(200, 200)
+                .padding_horizontal(10, 10),
         ))
         .spacing(5)
     ))
     .spacing(10)
-    .size(view::Size {width: 400, height: 400})
+    .size(400, 400)
 }
 
 fn main() {
