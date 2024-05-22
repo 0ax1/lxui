@@ -1,11 +1,11 @@
 pub struct CX;
 
-pub use self::view::{AnyView, Draw, ViewBase};
+pub use self::view::{View, Draw, ViewBase};
 
 pub mod view {
     use super::*;
 
-    pub trait AnyView: Draw + ViewBase {}
+    pub trait View: Draw + ViewBase {}
 
     pub trait Draw {
         fn draw(&self, cx: &CX);
@@ -49,16 +49,16 @@ pub mod view {
     }
 
     pub trait Group {
-        fn into_draw_group(self) -> Vec<Box<dyn AnyView>>;
+        fn into_draw_group(self) -> Vec<Box<dyn View>>;
     }
 
     macro_rules! impl_into_view_group {
         ($( { $($idx:tt $T:ident),+ } ),+ ) => {
             $(
-                impl<$($T: AnyView + 'static),+> Group for ($($T,)+) {
-                    fn into_draw_group(self) -> Vec<Box<dyn AnyView>> {
+                impl<$($T: View + 'static),+> Group for ($($T,)+) {
+                    fn into_draw_group(self) -> Vec<Box<dyn View>> {
                         vec![
-                            $(Box::new(self.$idx) as Box<dyn AnyView>,)+
+                            $(Box::new(self.$idx) as Box<dyn View>,)+
                         ]
                     }
                 }

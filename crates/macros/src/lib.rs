@@ -20,7 +20,7 @@ pub fn derive_draw_size(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl AnyView for #name{}
+        impl View for #name{}
     };
 
     TokenStream::from(expanded)

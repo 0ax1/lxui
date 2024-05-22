@@ -7,7 +7,7 @@ use macros::*;
 pub struct VStack {
     view_base: view::Base,
     spacing: i32,
-    elements: Vec<Box<dyn view::AnyView>>,
+    elements: Vec<Box<dyn view::View>>,
 }
 
 impl VStack {
