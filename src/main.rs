@@ -30,7 +30,7 @@ pub fn vstack<T: view::Group>(elements: T) -> VStack {
     VStack {
         view_base: view::Base::default(),
         spacing: i32::default(),
-        elements: elements.into_draw_group(),
+        elements: elements.into_view_group(),
     }
 }
 

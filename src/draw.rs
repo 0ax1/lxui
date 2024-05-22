@@ -49,14 +49,14 @@ pub mod view {
     }
 
     pub trait Group {
-        fn into_draw_group(self) -> Vec<Box<dyn View>>;
+        fn into_view_group(self) -> Vec<Box<dyn View>>;
     }
 
     macro_rules! impl_into_view_group {
         ($( { $($idx:tt $T:ident),+ } ),+ ) => {
             $(
                 impl<$($T: View + 'static),+> Group for ($($T,)+) {
-                    fn into_draw_group(self) -> Vec<Box<dyn View>> {
+                    fn into_view_group(self) -> Vec<Box<dyn View>> {
                         vec![
                             $(Box::new(self.$idx) as Box<dyn View>,)+
                         ]
