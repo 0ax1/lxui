@@ -5,6 +5,8 @@ pub use self::view::{AnyView, Draw, ViewBase};
 pub mod view {
     use super::*;
 
+    pub trait AnyView: Draw + ViewBase {}
+
     pub trait Draw {
         fn draw(&self, cx: &CX);
     }
@@ -46,51 +48,40 @@ pub mod view {
         }
     }
 
-    pub trait AnyView: Draw + ViewBase {}
-
     pub trait Group {
         fn into_draw_group(self) -> Vec<Box<dyn AnyView>>;
     }
 
-    impl<T1: AnyView + 'static> Group for (T1,) {
-        fn into_draw_group(self) -> Vec<Box<dyn AnyView>> {
-            vec![Box::new(self.0) as Box<dyn AnyView>]
+    macro_rules! impl_into_view_group {
+        ($( { $($idx:tt $T:ident),+ } ),+ ) => {
+            $(
+                impl<$($T: AnyView + 'static),+> Group for ($($T,)+) {
+                    fn into_draw_group(self) -> Vec<Box<dyn AnyView>> {
+                        vec![
+                            $(Box::new(self.$idx) as Box<dyn AnyView>,)+
+                        ]
+                    }
+                }
+            )+
         }
     }
 
-    impl<T1: AnyView + 'static, T2: AnyView + 'static> Group for (T1, T2) {
-        fn into_draw_group(self) -> Vec<Box<dyn AnyView>> {
-            vec![
-                Box::new(self.0) as Box<dyn AnyView>,
-                Box::new(self.1) as Box<dyn AnyView>,
-            ]
-        }
-    }
-
-    impl<T1: AnyView + 'static, T2: AnyView + 'static, T3: AnyView + 'static> Group for (T1, T2, T3) {
-        fn into_draw_group(self) -> Vec<Box<dyn AnyView>> {
-            vec![
-                Box::new(self.0) as Box<dyn AnyView>,
-                Box::new(self.1) as Box<dyn AnyView>,
-                Box::new(self.2) as Box<dyn AnyView>,
-            ]
-        }
-    }
-
-    impl<
-            T1: AnyView + 'static,
-            T2: AnyView + 'static,
-            T3: AnyView + 'static,
-            T4: AnyView + 'static,
-        > Group for (T1, T2, T3, T4)
-    {
-        fn into_draw_group(self) -> Vec<Box<dyn AnyView>> {
-            vec![
-                Box::new(self.0) as Box<dyn AnyView>,
-                Box::new(self.1) as Box<dyn AnyView>,
-                Box::new(self.2) as Box<dyn AnyView>,
-                Box::new(self.3) as Box<dyn AnyView>,
-            ]
-        }
+    impl_into_view_group! {
+        { 0 T0 },
+        { 0 T0, 1 T1 },
+        { 0 T0, 1 T1, 2 T2 },
+        { 0 T0, 1 T1, 2 T2, 3 T3 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12, 13 T13 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12, 13 T13, 14 T14 },
+        { 0 T0, 1 T1, 2 T2, 3 T3, 4 T4, 5 T5, 6 T6, 7 T7, 8 T8, 9 T9, 10 T10, 11 T11, 12 T12, 13 T13, 14 T14, 15 T15 }
     }
 }
