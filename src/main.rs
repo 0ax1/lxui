@@ -1,47 +1,45 @@
 mod draw;
 use draw::*;
 
+pub struct VStack {
+    size: Size,
+    elements: Vec<Box<dyn Draw>>,
+}
+
+impl VStack {
+    fn size(mut self, size: Size) -> Self {
+        self.size = size;
+        self
+    }
+
+    pub fn spacing(self, distance: i32) -> Self {
+        println!("spacing: {}", distance);
+        self
+    }
+}
+
 impl Draw for VStack {
-    fn size_(&self) -> Size {
-        Size {
-            width: 100,
-            height: 100,
-        }
+    fn size(&self) -> Size {
+        self.size
     }
 
-    fn draw(&self) {
+    fn draw(&self, cx: &CX) {
         for element in &self.elements {
-            element.draw()
+            element.draw(cx)
         }
-    }
-}
-
-impl std::fmt::Display for Position {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{ x: {}, y: {} }}", self.x, self.y)
-    }
-}
-
-impl std::fmt::Display for Size {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{ width: {}, height: {} }}", self.width, self.height)
     }
 }
 
 pub fn vstack<T: DrawGroup>(elements: T) -> VStack {
     VStack {
         size: Size::default(),
-        elements: elements.into_vec(),
+        elements: elements.into_draw_group(),
     }
 }
 
 #[derive(Copy, Clone, Default)]
 pub struct Rectangle {
     size: Size,
-}
-
-fn rectangle() -> Rectangle {
-    Rectangle::default()
 }
 
 impl Rectangle {
@@ -52,12 +50,12 @@ impl Rectangle {
 }
 
 impl Draw for Rectangle {
-    fn size_(&self) -> Size {
+    fn size(&self) -> Size {
         self.size
     }
 
-    fn draw(&self) {
-        println!("rectangle: {}", self.size_());
+    fn draw(&self, _cx: &CX) {
+        println!("rectangle: {}", self.size());
     }
 }
 
@@ -73,55 +71,31 @@ impl Circle {
     }
 }
 
-fn circle() -> Circle {
-    Circle::default()
-}
-
 impl Draw for Circle {
-    fn size_(&self) -> Size {
-        Size {
-            width: 100,
-            height: 100,
-        }
+    fn size(&self) -> Size {
+        self.size
     }
 
-    fn draw(&self) {
-        println!("circle: {}", self.size_());
-    }
-}
-
-pub struct VStack {
-    size: Size,
-    elements: Vec<Box<dyn Draw>>,
-}
-
-impl VStack {
-    pub fn draw(&self) {
-        for element in &self.elements {
-            element.draw();
-        }
-    }
-
-    fn size(mut self, size: Size) -> Self {
-        self.size = size;
-        self
-    }
-
-    pub fn spacing(self, distance: i32) -> Self {
-        println!("spacing: {}", distance);
-        self
+    fn draw(&self, _cx: &CX) {
+        println!("circle: {}", self.size());
     }
 }
 
 #[rustfmt::skip]
 fn canvas() -> impl Draw {
     vstack((
-        rectangle().size(Size {width: 100, height: 100}), 
-        circle().size(Size {width: 100, height: 100}),
+        Rectangle::default()
+            .size(Size {width: 100, height: 100}), 
+
+        Circle::default()
+            .size(Size {width: 100, height: 100}),
 
         vstack((
-            rectangle(), 
-            circle(),
+            Rectangle::default()
+                .size(Size {width: 200, height: 200}),
+
+            Circle::default()
+                .size(Size {width: 200, height: 200}),
         ))
         .spacing(5)
 
@@ -131,5 +105,6 @@ fn canvas() -> impl Draw {
 }
 
 fn main() {
-    canvas().draw();
+    let cx = CX;
+    canvas().draw(&cx);
 }
