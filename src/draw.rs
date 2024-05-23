@@ -37,6 +37,7 @@ pub mod view {
     pub struct Base {
         pub size: Size,
         pub visible: bool,
+
         pub padding_top: i32,
         pub padding_bottom: i32,
         pub padding_left: i32,

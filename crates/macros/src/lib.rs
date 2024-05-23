@@ -3,7 +3,7 @@ use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
 #[proc_macro_derive(ViewBase)]
-pub fn derive_draw_size(input: TokenStream) -> TokenStream {
+pub fn derive_view_base(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
     let expanded = quote! {
