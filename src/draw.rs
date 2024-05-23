@@ -1,28 +1,34 @@
-pub struct CX;
-
 pub use self::view::{Draw, View, ViewBase};
 
 pub mod view {
-    use super::*;
+    #[derive(Debug, Copy, Clone, Default)]
+    pub struct Context {
+        pub origin: Origin,
+        pub level: i32,
+    }
 
     pub trait View: Draw + ViewBase {}
 
     pub trait Draw {
-        fn draw(&self, cx: &CX);
+        fn draw(&self, cx: Context);
     }
 
     pub trait ViewBase {
         fn size(&self) -> Size;
+        fn width(&self) -> i32;
+        fn height(&self) -> i32;
         fn visible(&self) -> bool;
 
         fn padding_top(&self) -> i32;
         fn padding_bottom(&self) -> i32;
         fn padding_left(&self) -> i32;
         fn padding_right(&self) -> i32;
+        fn padding_vertical(&self) -> i32;
+        fn padding_horizontal(&self) -> i32;
     }
 
     #[derive(Debug, Copy, Clone, Default)]
-    pub struct Position {
+    pub struct Origin {
         pub x: i32,
         pub y: i32,
     }
@@ -33,7 +39,6 @@ pub mod view {
         pub height: i32,
     }
 
-    #[derive(Copy, Clone)]
     pub struct Base {
         pub size: Size,
         pub visible: bool,
@@ -49,6 +54,7 @@ pub mod view {
             Self {
                 size: Size::default(),
                 visible: true,
+
                 padding_top: 0,
                 padding_bottom: 0,
                 padding_left: 0,
@@ -57,7 +63,7 @@ pub mod view {
         }
     }
 
-    impl std::fmt::Display for Position {
+    impl std::fmt::Display for Origin {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             write!(f, "{{ x: {}, y: {} }}", self.x, self.y)
         }

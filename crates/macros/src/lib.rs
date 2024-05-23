@@ -39,15 +39,15 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
                 self
             }
 
-            pub fn padding_horizontal(mut self, padding_left: i32, padding_right: i32) -> Self {
-                self.view_base.padding_left = padding_left;
-                self.view_base.padding_right = padding_right;
+            pub fn padding_horizontal(mut self, padding: i32) -> Self {
+                self.view_base.padding_left = padding;
+                self.view_base.padding_right = padding;
                 self
             }
 
-            pub fn padding_vertical(mut self, padding_top: i32, padding_bottom: i32) -> Self {
-                self.view_base.padding_top = padding_top;
-                self.view_base.padding_bottom = padding_bottom;
+            pub fn padding_vertical(mut self, padding: i32) -> Self {
+                self.view_base.padding_top = padding;
+                self.view_base.padding_bottom = padding;
                 self
             }
         }
@@ -55,6 +55,14 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
         impl ViewBase for #name {
             fn size(&self) -> view::Size {
                 self.view_base.size
+            }
+
+            fn width(&self) -> i32 {
+                self.view_base.size.width
+            }
+
+            fn height(&self) -> i32 {
+                self.view_base.size.height
             }
 
             fn visible(&self) -> bool {
@@ -75,6 +83,14 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
 
             fn padding_right(&self) -> i32 {
                 self.view_base.padding_right
+            }
+
+            fn padding_horizontal(&self) -> i32 {
+                self.view_base.padding_left + self.view_base.padding_right
+            }
+
+            fn padding_vertical(&self) -> i32 {
+                self.view_base.padding_top + self.view_base.padding_bottom
             }
         }
 
