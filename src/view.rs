@@ -1,49 +1,50 @@
-#[derive(Debug, Copy, Clone, Default)]
+#[derive(Copy, Clone, Default)]
 pub struct Context {
     pub origin: Origin,
+    pub mouse_position: Origin,
     pub level: i32,
 }
 
 pub trait View: Draw + ViewBase {}
 
 pub trait Draw {
-    fn draw(&self, cx: Context);
+    fn draw(&self, cx: Context, scene: &mut vello::Scene);
 }
 
 pub trait ViewBase {
     fn size(&self) -> Size;
-    fn width(&self) -> i32;
-    fn height(&self) -> i32;
+    fn width(&self) -> f64;
+    fn height(&self) -> f64;
     fn visible(&self) -> bool;
 
-    fn padding_top(&self) -> i32;
-    fn padding_bottom(&self) -> i32;
-    fn padding_left(&self) -> i32;
-    fn padding_right(&self) -> i32;
-    fn padding_vertical(&self) -> i32;
-    fn padding_horizontal(&self) -> i32;
+    fn padding_top(&self) -> f64;
+    fn padding_bottom(&self) -> f64;
+    fn padding_left(&self) -> f64;
+    fn padding_right(&self) -> f64;
+    fn padding_vertical(&self) -> f64;
+    fn padding_horizontal(&self) -> f64;
 }
 
 #[derive(Debug, Copy, Clone, Default)]
 pub struct Origin {
-    pub x: i32,
-    pub y: i32,
+    pub x: f64,
+    pub y: f64,
 }
 
 #[derive(Copy, Clone, Default)]
 pub struct Size {
-    pub width: i32,
-    pub height: i32,
+    pub width: f64,
+    pub height: f64,
 }
 
 pub struct Base {
     pub size: Size,
     pub visible: bool,
 
-    pub padding_top: i32,
-    pub padding_bottom: i32,
-    pub padding_left: i32,
-    pub padding_right: i32,
+    pub padding_top: f64,
+    pub padding_bottom: f64,
+    pub padding_left: f64,
+    pub padding_right: f64,
 }
 
 impl Default for Base {
@@ -52,10 +53,10 @@ impl Default for Base {
             size: Size::default(),
             visible: true,
 
-            padding_top: 0,
-            padding_bottom: 0,
-            padding_left: 0,
-            padding_right: 0,
+            padding_top: 0.0,
+            padding_bottom: 0.0,
+            padding_left: 0.0,
+            padding_right: 0.0,
         }
     }
 }
