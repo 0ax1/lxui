@@ -75,7 +75,7 @@ impl view::Draw for VStack {
         // only view containers need to check for element visibility.
         for element in self.elements.iter().filter(|e| e.visible()) {
             if let Some(list) = element.as_any().downcast_ref::<Loop>() {
-                for element in &list.elements {
+                for element in list.elements.iter().filter(|e| e.visible()) {
                     process(element, &mut cx, scene);
                 }
             } else {
@@ -133,7 +133,7 @@ impl view::Draw for HStack {
 
         for element in self.elements.iter().filter(|e| e.visible()) {
             if let Some(list) = element.as_any().downcast_ref::<Loop>() {
-                for element in &list.elements {
+                for element in list.elements.iter().filter(|e| e.visible()) {
                     process(element, &mut cx, scene);
                 }
             } else {
