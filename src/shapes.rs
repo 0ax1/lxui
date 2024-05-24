@@ -2,22 +2,22 @@ use crate::{view, *};
 use macros::*;
 use vello::peniko::Color;
 
-#[derive(ViewBase)]
+#[derive(AnyView)]
 pub struct Loop {
     view_base: view::Base,
-    elements: Vec<Box<dyn view::View>>,
+    elements: Vec<Box<dyn view::AnyView>>,
 }
 
 impl Loop {
     pub fn new<F, T>(count: i32, func: F) -> Loop
     where
-        T: View + 'static,
+        T: AnyView + 'static,
         F: Fn(i32) -> T,
     {
         Loop {
             view_base: view::Base::default(),
             elements: (0..count)
-                .map(|idx| Box::new(func(idx)) as Box<dyn View>)
+                .map(|idx| Box::new(func(idx)) as Box<dyn AnyView>)
                 .collect(),
         }
     }
@@ -27,11 +27,11 @@ impl view::Draw for Loop {
     fn draw(&self, _: view::Context, _: &mut vello::Scene) {}
 }
 
-#[derive(ViewBase)]
+#[derive(AnyView)]
 pub struct VStack {
     view_base: view::Base,
     spacing: f64,
-    elements: Vec<Box<dyn view::View>>,
+    elements: Vec<Box<dyn view::AnyView>>,
 }
 
 impl VStack {
@@ -55,7 +55,7 @@ impl view::Draw for VStack {
         cx.level += 1;
 
         let process =
-            |element: &Box<dyn View>, cx: &mut view::Context, scene: &mut vello::Scene| {
+            |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
                 element.draw(
                     view::Context {
                         origin: view::Origin {
@@ -85,11 +85,11 @@ impl view::Draw for VStack {
     }
 }
 
-#[derive(ViewBase)]
+#[derive(AnyView)]
 pub struct HStack {
     view_base: view::Base,
     spacing: f64,
-    elements: Vec<Box<dyn view::View>>,
+    elements: Vec<Box<dyn view::AnyView>>,
 }
 
 impl HStack {
@@ -115,7 +115,7 @@ impl view::Draw for HStack {
         // Given that the root view is a container and always drawn,
         // only view containers need to check for element visibility.
         let process =
-            |element: &Box<dyn View>, cx: &mut view::Context, scene: &mut vello::Scene| {
+            |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
                 element.draw(
                     view::Context {
                         origin: view::Origin {
@@ -143,7 +143,7 @@ impl view::Draw for HStack {
     }
 }
 
-#[derive(Default, ViewBase)]
+#[derive(Default, AnyView)]
 pub struct Rectangle {
     view_base: view::Base,
 }
@@ -170,7 +170,7 @@ impl view::Draw for Rectangle {
     }
 }
 
-#[derive(Default, ViewBase)]
+#[derive(Default, AnyView)]
 pub struct Circle {
     view_base: view::Base,
 }

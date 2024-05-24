@@ -4,7 +4,7 @@ pub struct Context {
     pub level: i32,
 }
 
-pub trait View: Draw + ViewBase + std::any::Any {
+pub trait AnyView: Draw + ViewBase + std::any::Any {
     fn as_any(&self) -> &dyn std::any::Any;
 }
 
@@ -75,16 +75,16 @@ impl std::fmt::Display for Size {
 }
 
 pub trait Group {
-    fn into_view_group(self) -> Vec<Box<dyn View>>;
+    fn into_view_group(self) -> Vec<Box<dyn AnyView>>;
 }
 
 macro_rules! impl_into_view_group {
         ($( { $($idx:tt $T:ident),+ } ),+ ) => {
             $(
-                impl<$($T: View + 'static),+> Group for ($($T,)+) {
-                    fn into_view_group(self) -> Vec<Box<dyn View>> {
+                impl<$($T: AnyView + 'static),+> Group for ($($T,)+) {
+                    fn into_view_group(self) -> Vec<Box<dyn AnyView>> {
                         vec![
-                            $(Box::new(self.$idx) as Box<dyn View>,)+
+                            $(Box::new(self.$idx) as Box<dyn AnyView>,)+
                         ]
                     }
                 }

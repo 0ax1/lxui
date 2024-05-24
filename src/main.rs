@@ -100,7 +100,7 @@ fn init_runloop() {
 }
 
 #[rustfmt::skip]
-fn view_tree() -> impl view::View {
+fn view_tree() -> impl view::AnyView {
     VStack::new((
         HStack::new((
             Rectangle::default()

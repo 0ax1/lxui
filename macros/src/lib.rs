@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, DeriveInput};
 
-#[proc_macro_derive(ViewBase)]
+#[proc_macro_derive(AnyView)]
 pub fn derive_view_base(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
@@ -94,7 +94,7 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl view::View for #name {
+        impl view::AnyView for #name {
             fn as_any(&self) -> &dyn std::any::Any {
                 self
             }
