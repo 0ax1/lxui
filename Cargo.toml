@@ -4,4 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-macros = { path = "crates/macros" }
+macros = { path = "macros" }
+anyhow = "1.0.86"
+pollster = "0.3.0"
+wgpu = "0.20.0"
+winit = "0.30.0"
