@@ -1,5 +1,6 @@
 use crate::{view, *};
 use macros::*;
+use vello::peniko::Color;
 
 #[derive(ViewBase)]
 pub struct Loop {

@@ -1,7 +1,6 @@
 #[derive(Copy, Clone, Default)]
 pub struct Context {
     pub origin: Origin,
-    pub mouse_position: Origin,
     pub level: i32,
 }
 

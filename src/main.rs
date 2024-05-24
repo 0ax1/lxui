@@ -6,56 +6,28 @@ use view::*;
 mod shapes;
 use shapes::*;
 
-use std::sync::Arc;
-use vello::peniko::Color;
-use vello::util::RenderSurface;
-use vello::{AaConfig, Renderer, RendererOptions, Scene};
+mod rendering;
+use rendering::*;
+
 use winit::dpi::LogicalSize;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 
-pub struct ActiveRenderState<'s> {
-    surface: RenderSurface<'s>,
-    window: Arc<winit::window::Window>,
-}
-
-enum RenderState<'s> {
-    Active(ActiveRenderState<'s>),
-    Suspended(Option<Arc<winit::window::Window>>),
-}
-
-fn init_winit_window(event_loop: &ActiveEventLoop) -> Arc<winit::window::Window> {
+fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::window::Window> {
     let attr = winit::window::Window::default_attributes()
         .with_inner_size(LogicalSize::new(750, 180))
         .with_resizable(true)
         .with_title("fors: gpu go brr");
 
-    Arc::new(event_loop.create_window(attr).unwrap())
+    std::sync::Arc::new(event_loop.create_window(attr).expect("error: creating window"))
 }
 
-fn init_vello_renderer(
-    render_cx: &vello::util::RenderContext,
-    surface: &RenderSurface,
-) -> Renderer {
-    Renderer::new(
-        &render_cx.devices[surface.dev_id].device,
-        RendererOptions {
-            surface_format: Some(surface.format),
-            use_cpu: false,
-            antialiasing_support: vello::AaSupport::all(),
-            num_init_threads: std::num::NonZeroUsize::new(1),
-        },
-    )
-    .expect("error: initializing vello renderer")
-}
 
 fn init_runloop() {
     let mut render_cx = vello::util::RenderContext::new().expect("error: creating render context");
-    let mut renderers: Vec<Option<Renderer>> = [].into();
+    let mut renderers: Vec<Option<vello::Renderer>> = [].into();
     let mut render_state = RenderState::Suspended(None);
-    let mut scene = Scene::new();
+    let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
-
-    let mut mouse_position = view::Origin::default();
 
     #[allow(deprecated)]
     let result = event_loop.run(move |event, event_loop| match event {
@@ -79,7 +51,7 @@ fn init_runloop() {
 
             renderers.resize_with(render_cx.devices.len(), || None);
             renderers[surface.dev_id]
-                .get_or_insert_with(|| init_vello_renderer(&render_cx, &surface));
+                .get_or_insert_with(|| init_renderer(&render_cx, &surface));
 
             render_state = RenderState::Active(ActiveRenderState { window, surface });
             event_loop.set_control_flow(ControlFlow::Poll);
@@ -99,13 +71,6 @@ fn init_runloop() {
             };
 
             match event {
-                winit::event::WindowEvent::CursorMoved { position, .. } => {
-                    mouse_position = view::Origin {
-                        x: position.x,
-                        y: position.y,
-                    };
-                }
-
                 winit::event::WindowEvent::CloseRequested => event_loop.exit(),
 
                 winit::event::WindowEvent::Resized(size) => {
@@ -115,44 +80,15 @@ fn init_runloop() {
 
                 winit::event::WindowEvent::RedrawRequested => {
                     scene.reset();
-
                     view_tree().draw(
                         view::Context {
                             origin: view::Origin { x: 0.0, y: 0.0 },
-                            mouse_position,
                             level: 0,
                         },
                         &mut scene,
                     );
+                    rendering::render(render_state, &render_cx, &scene, &mut renderers);
 
-                    let surface = &render_state.surface;
-                    let width = surface.config.width;
-                    let height = surface.config.height;
-                    let device_handle = &render_cx.devices[surface.dev_id];
-                    let surface_texture = surface
-                        .surface
-                        .get_current_texture()
-                        .expect("error: getting surface texture");
-
-                    renderers[surface.dev_id]
-                        .as_mut()
-                        .unwrap()
-                        .render_to_surface(
-                            &device_handle.device,
-                            &device_handle.queue,
-                            &scene,
-                            &surface_texture,
-                            &vello::RenderParams {
-                                base_color: Color::BLACK,
-                                width,
-                                height,
-                                antialiasing_method: AaConfig::Msaa16,
-                            },
-                        )
-                        .expect("error: rendering to surface");
-
-                    surface_texture.present();
-                    device_handle.device.poll(wgpu::Maintain::Poll);
                 }
                 _ => {}
             }
