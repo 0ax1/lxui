@@ -25,7 +25,7 @@ enum RenderState<'s> {
 
 fn init_winit_window(event_loop: &ActiveEventLoop) -> Arc<winit::window::Window> {
     let attr = winit::window::Window::default_attributes()
-        .with_inner_size(LogicalSize::new(600, 320))
+        .with_inner_size(LogicalSize::new(750, 180))
         .with_resizable(true)
         .with_title("fors: gpu go brr");
 
@@ -104,7 +104,6 @@ fn init_runloop() {
                         x: position.x,
                         y: position.y,
                     };
-                    render_state.window.request_redraw();
                 }
 
                 winit::event::WindowEvent::CloseRequested => event_loop.exit(),
@@ -164,8 +163,6 @@ fn init_runloop() {
     println!("{:?}", result);
 }
 
-fn for_each() {}
-
 #[rustfmt::skip]
 fn view_tree() -> impl view::View {
     VStack::new((
@@ -174,7 +171,7 @@ fn view_tree() -> impl view::View {
                 .size(100.0, 100.0),
 
             Circle::default()
-                .size(100.0, 100.0)
+                .diameter(100.0)
                 .padding_left(40.0),
 
             Rectangle::default()
@@ -182,32 +179,24 @@ fn view_tree() -> impl view::View {
                 .padding_left(40.0),
 
             Circle::default()
-                .size(100.0, 100.0)
-                .padding_left(40.0),
+                .diameter(100.0)
+                .padding_left(40.0)
         ))
-        .size(430.0, 100.0)
-        .padding_bottom(100.0),
+        .size(430.0, 100.0),
 
         HStack::new((
-            Rectangle::default()
-                .size(200.0, 200.0),
-
-            Circle::default()
-                .size(200.0, 200.0),
-
-            Rectangle::default()
-                .size(200.0, 200.0),
-
-            Circle::default()
-                .size(200.0, 200.0),
-
+            Loop::new(20, |idx|
+                Circle::default()
+                    .diameter(10.0 * (idx + 1) as f64 / 2.0)
+            ),
         ))
-        .spacing(40.0)
+        .spacing(20.0)
         .size(830.0, 200.0),
     ))
     .size(620.0, 300.0)
-    .padding_left(100.0)
-    .padding_top(100.0)
+    .spacing(100.0)
+    .padding_top(40.0)
+    .padding_left(40.0)
 }
 
 fn main() {

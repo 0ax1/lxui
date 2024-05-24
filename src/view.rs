@@ -5,7 +5,9 @@ pub struct Context {
     pub level: i32,
 }
 
-pub trait View: Draw + ViewBase {}
+pub trait View: Draw + ViewBase + std::any::Any {
+    fn as_any(&self) -> &dyn std::any::Any;
+}
 
 pub trait Draw {
     fn draw(&self, cx: Context, scene: &mut vello::Scene);

@@ -94,7 +94,12 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl View for #name{}
+        impl view::View for #name {
+            fn as_any(&self) -> &dyn std::any::Any {
+                self
+            }
+        }
+
     };
 
     TokenStream::from(expanded)

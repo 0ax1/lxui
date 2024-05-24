@@ -2,6 +2,31 @@ use crate::{view, *};
 use macros::*;
 
 #[derive(ViewBase)]
+pub struct Loop {
+    view_base: view::Base,
+    elements: Vec<Box<dyn view::View>>,
+}
+
+impl Loop {
+    pub fn new<F, T>(count: i32, func: F) -> Loop
+    where
+        T: View + 'static,
+        F: Fn(i32) -> T,
+    {
+        Loop {
+            view_base: view::Base::default(),
+            elements: (0..count)
+                .map(|idx| Box::new(func(idx)) as Box<dyn View>)
+                .collect(),
+        }
+    }
+}
+
+impl view::Draw for Loop {
+    fn draw(&self, _: view::Context, _: &mut vello::Scene) {}
+}
+
+#[derive(ViewBase)]
 pub struct VStack {
     view_base: view::Base,
     spacing: f64,
@@ -28,22 +53,33 @@ impl view::Draw for VStack {
         println!("L{} VStack {} {}", cx.level, self.size(), cx.origin);
         cx.level += 1;
 
+        let process =
+            |element: &Box<dyn View>, cx: &mut view::Context, scene: &mut vello::Scene| {
+                element.draw(
+                    view::Context {
+                        origin: view::Origin {
+                            x: cx.origin.x + self.padding_left(),
+                            y: cx.origin.y + self.padding_top(),
+                        },
+                        ..*cx
+                    },
+                    scene,
+                );
+                cx.origin.y += element.height();
+                cx.origin.y += element.padding_vertical();
+                cx.origin.y += self.spacing;
+            };
+
         // Given that the root view is a container and always drawn,
         // only view containers need to check for element visibility.
         for element in self.elements.iter().filter(|e| e.visible()) {
-            element.draw(
-                view::Context {
-                    origin: view::Origin {
-                        x: cx.origin.x + self.padding_left(),
-                        y: cx.origin.y + self.padding_top(),
-                    },
-                    ..cx
-                },
-                scene,
-            );
-            cx.origin.y += element.height();
-            cx.origin.y += element.padding_vertical();
-            cx.origin.y += self.spacing;
+            if let Some(list) = element.as_any().downcast_ref::<Loop>() {
+                for element in &list.elements {
+                    process(element, &mut cx, scene);
+                }
+            } else {
+                process(element, &mut cx, scene);
+            }
         }
     }
 }
@@ -77,20 +113,31 @@ impl view::Draw for HStack {
 
         // Given that the root view is a container and always drawn,
         // only view containers need to check for element visibility.
-        for element in self.elements.iter().filter(|e| e.visible()) {
-            element.draw(
-                view::Context {
-                    origin: view::Origin {
-                        x: cx.origin.x + self.padding_left(),
-                        y: cx.origin.y + self.padding_top(),
+        let process =
+            |element: &Box<dyn View>, cx: &mut view::Context, scene: &mut vello::Scene| {
+                element.draw(
+                    view::Context {
+                        origin: view::Origin {
+                            x: cx.origin.x + self.padding_left(),
+                            y: cx.origin.y + self.padding_top(),
+                        },
+                        ..*cx
                     },
-                    ..cx
-                },
-                scene,
-            );
-            cx.origin.x += element.width();
-            cx.origin.x += element.padding_horizontal();
-            cx.origin.x += self.spacing;
+                    scene,
+                );
+                cx.origin.x += element.width();
+                cx.origin.x += element.padding_horizontal();
+                cx.origin.x += self.spacing;
+            };
+
+        for element in self.elements.iter().filter(|e| e.visible()) {
+            if let Some(list) = element.as_any().downcast_ref::<Loop>() {
+                for element in &list.elements {
+                    process(element, &mut cx, scene);
+                }
+            } else {
+                process(element, &mut cx, scene);
+            }
         }
     }
 }
@@ -125,6 +172,16 @@ impl view::Draw for Rectangle {
 #[derive(Default, ViewBase)]
 pub struct Circle {
     view_base: view::Base,
+}
+
+impl Circle {
+    pub fn diameter(self, diameter: f64) -> Self {
+        self.size(diameter, diameter)
+    }
+
+    pub fn radius(self, radius: f64) -> Self {
+        self.size(radius * 2.0, radius * 2.0)
+    }
 }
 
 impl view::Draw for Circle {
