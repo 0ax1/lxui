@@ -58,6 +58,7 @@ impl view::Draw for VStack {
             |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
                 element.draw(
                     view::Context {
+                        // Apply the origin offset of the VStack itself.
                         origin: view::Origin {
                             x: cx.origin.x + self.padding_left(),
                             y: cx.origin.y + self.padding_top(),
@@ -66,6 +67,8 @@ impl view::Draw for VStack {
                     },
                     scene,
                 );
+
+                // Offset origin.y for the next element in the VStack.
                 cx.origin.y += element.height();
                 cx.origin.y += element.padding_vertical();
                 cx.origin.y += self.spacing;
@@ -118,6 +121,7 @@ impl view::Draw for HStack {
             |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
                 element.draw(
                     view::Context {
+                        // Apply the origin offset of the HStack itself.
                         origin: view::Origin {
                             x: cx.origin.x + self.padding_left(),
                             y: cx.origin.y + self.padding_top(),
@@ -126,6 +130,8 @@ impl view::Draw for HStack {
                     },
                     scene,
                 );
+
+                // Offset origin.x for the next element in the HStack.
                 cx.origin.x += element.width();
                 cx.origin.x += element.padding_horizontal();
                 cx.origin.x += self.spacing;
@@ -193,7 +199,7 @@ impl view::Draw for Circle {
         let circle = vello::kurbo::Circle::new(
             (
                 cx.origin.x + self.padding_left() + self.width() / 2.0,
-                cx.origin.y + self.padding_top() + self.width() / 2.0,
+                cx.origin.y + self.padding_top() + self.height() / 2.0,
             ),
             self.width() / 2.0,
         );
