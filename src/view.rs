@@ -78,6 +78,12 @@ pub trait Group {
     fn into_view_group(self) -> Vec<Box<dyn AnyView>>;
 }
 
+impl<T: AnyView + 'static> Group for T {
+    fn into_view_group(self) -> Vec<Box<dyn AnyView>> {
+        vec![Box::new(self) as Box<dyn AnyView>]
+    }
+}
+
 macro_rules! impl_into_view_group {
         ($( { $($idx:tt $T:ident),+ } ),+ ) => {
             $(

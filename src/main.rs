@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, unused_parens)]
 
 mod view;
 use view::*;
@@ -117,7 +117,7 @@ fn view_tree() -> impl view::AnyView {
                 Loop::new(10, |idx|
                     Circle::default()
                         .diameter(10.0 * (idx + 1) as f64 / 2.0)
-                        .padding_left((idx * 20 + 1) as f64)
+                        .padding_left((idx * 40 + 1) as f64)
                 ),
 
                 Circle::default()
@@ -126,7 +126,6 @@ fn view_tree() -> impl view::AnyView {
                     .padding_left(25.0),
             ))
             .size(100.0, 100.0),
-
         ))
         .spacing(40.0)
         .size(430.0, 100.0),
@@ -135,7 +134,7 @@ fn view_tree() -> impl view::AnyView {
             Loop::new(10, |idx|
                 Circle::default()
                     .diameter(10.0 * (idx + 1) as f64 / 2.0)
-            ),
+            )
         ))
         .spacing(20.0)
         .size(830.0, 200.0),
