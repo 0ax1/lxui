@@ -11,7 +11,7 @@ pub struct Loop {
 impl Loop {
     pub fn new<F, T>(count: i32, func: F) -> Loop
     where
-        T: AnyView + 'static,
+        T: AnyView,
         F: Fn(i32) -> T,
     {
         Loop {

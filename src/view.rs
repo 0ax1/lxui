@@ -78,7 +78,7 @@ pub trait Container {
     fn into_view_container(self) -> Vec<Box<dyn AnyView>>;
 }
 
-impl<T: AnyView + 'static> Container for T {
+impl<T: AnyView> Container for T {
     fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
         vec![Box::new(self) as Box<dyn AnyView>]
     }
@@ -87,7 +87,7 @@ impl<T: AnyView + 'static> Container for T {
 macro_rules! impl_into_view_container {
     ($( { $($idx:tt $T:ident),+ } ),+ ) => {
         $(
-            impl<$($T: AnyView + 'static),+> Container for ($($T,)+) {
+            impl<$($T: AnyView),+> Container for ($($T,)+) {
                 fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
                     vec![
                         $(Box::new(self.$idx) as Box<dyn AnyView>,)+
