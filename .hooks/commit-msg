@@ -1,0 +1,33 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+readonly commit_message=$1
+readonly title=`cat $commit_message | head -1`
+
+# Allow for a range of commit title prefixes to be less constrained.
+if [[ ! -z `echo $title | grep -E '^(Merge |ver|fixup!|squash!|wip|WIP)'` ]]; then
+    exit 0
+fi
+
+function handle_invalid_message() {
+    echo ""
+    echo "Edit your previous commit message with 'git commit -eF `readlink -f $commit_message`'."
+    sed -i '/^#/d' $commit_message # Strip comments from invalid message.
+    exit 1
+}
+
+readonly prefix_regex='^(feat|fix|ref|rename|clean|docs|format|perf|test|bench|security|xcode):'
+
+if [[ -z `echo $title | grep -E $prefix_regex` ]]; then
+    echo "error: Commit title must start with a valid prefix:"
+    echo "'feat:', 'fix:', 'ref:', 'rename:', 'clean:', 'docs:', 'format:', 'perf:', 'test:', 'bench:', 'security:', 'xcode:', 'Merge', 'fixup!' 'squash!', 'wip' or 'WIP'"
+    handle_invalid_message
+
+elif [[ -z `echo $title | grep -E "$prefix_regex "` ]]; then
+    echo "error: Commit title prefix must be followed by a space."
+    handle_invalid_message
+
+elif [[ ! -z `echo $title | grep -E '\.$'` ]]; then
+    echo "error: Commit title must not end with a dot."
+    handle_invalid_message
+fi

@@ -114,12 +114,6 @@ fn view_tree() -> impl view::AnyView {
                 Rectangle::default()
                     .size(100.0, 100.0),
 
-                Loop::new(10, |idx|
-                    Circle::default()
-                        .diameter(10.0 * (idx + 1) as f64 / 2.0)
-                        .padding_left((idx * 40 + 1) as f64)
-                ),
-
                 Circle::default()
                     .diameter(50.0)
                     .padding_top(25.0)

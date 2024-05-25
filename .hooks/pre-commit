@@ -1,0 +1,85 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+cd `git rev-parse --show-toplevel`
+
+# Use 'new line' as the only separator in for-loops.
+IFS=$'\n'
+
+# Exit code to signal if all checks passed.
+exit_code=0
+
+# Sync ctags file on commit.
+ctags **/*.(c|cpp|h|hpp|mm|m|swift|rs)
+
+# Install missing tools.
+[[ ! `command -v clang-format` ]] && brew install clang-format
+[[ ! `command -v gsed` ]] && brew install gnu-sed
+
+# Check for new and renamed files if there is a space in the file name.
+function check_for_spaces_in_file_names() {
+    for file in `git diff --name-only --diff-filter=AR --staged | grep '\s'`; do
+        echo "error: '$file' contains a space in the file name."
+        exit_code=1
+    done
+}
+
+# Check if the staged content contains trailing white space.
+function check_for_trailing_white_space() {
+    for file in `git diff --name-only --diff-filter=AM --staged`; do
+        if [[ ! -z `file $file | grep text` ]]; then
+            if [[ $file == mono.xcodeproj/* ]]; then
+                continue
+            fi
+
+            gsed -i 's/[ \t]*$//' $file
+            git add $file
+        fi
+    done
+}
+
+# Check if the staged content contains tabs.
+function check_for_tabs() {
+    for file in `git diff --name-only --diff-filter=AM --staged`; do
+        if [[ $file == *.sh ]]; then
+            gsed -i 's/\t/    /g' $file
+            git add $file
+        fi
+    done
+}
+
+# Replace #include with #import.
+function check_include_pragmas() {
+    for file in `git diff --name-only --diff-filter=AM --staged`; do
+        if [[ $file == Third/* ]]; then
+            continue
+        fi
+
+        if [[ $file == *.(c|cpp|mm|h|hpp) ]]; then
+            gsed -i 's/#include/#import/' $file
+            git add $file
+        fi
+    done
+}
+
+# Check if the staged files which were added or modified are formatted completely.
+function check_for_formatting() {
+    for file in `git diff --name-only --diff-filter=AM --staged`; do
+        if [[ $file == *.(c|cpp|mm|m|h|hpp) ]]; then
+            clang-format -i --style=file $file
+            git add $file
+        fi
+
+        if [[ $file == *.(rs) ]]; then
+            rustfmt $file
+            git add $file
+        fi
+    done
+}
+
+check_for_formatting
+check_for_spaces_in_file_names
+check_for_trailing_white_space
+check_for_tabs
+check_include_pragmas
+
+exit $exit_code
