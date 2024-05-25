@@ -18,9 +18,12 @@ fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::wind
         .with_resizable(true)
         .with_title("fors: gpu go brr");
 
-    std::sync::Arc::new(event_loop.create_window(attr).expect("error: creating window"))
+    std::sync::Arc::new(
+        event_loop
+            .create_window(attr)
+            .expect("error: creating window"),
+    )
 }
-
 
 fn init_runloop() {
     let mut render_cx = vello::util::RenderContext::new().expect("error: creating render context");
@@ -50,8 +53,7 @@ fn init_runloop() {
             let surface = pollster::block_on(surface_future).expect("error: creating surface");
 
             renderers.resize_with(render_cx.devices.len(), || None);
-            renderers[surface.dev_id]
-                .get_or_insert_with(|| init_renderer(&render_cx, &surface));
+            renderers[surface.dev_id].get_or_insert_with(|| init_renderer(&render_cx, &surface));
 
             render_state = RenderState::Active(ActiveRenderState { window, surface });
             event_loop.set_control_flow(ControlFlow::Poll);
@@ -88,7 +90,6 @@ fn init_runloop() {
                         &mut scene,
                     );
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
-
                 }
                 _ => {}
             }
@@ -107,21 +108,31 @@ fn view_tree() -> impl view::AnyView {
                 .size(100.0, 100.0),
 
             Circle::default()
-                .diameter(100.0)
-                .padding_left(40.0),
+                .diameter(100.0),
 
-            Rectangle::default()
-                .size(100.0, 100.0)
-                .padding_left(40.0),
+            ZStack::new((
+                Rectangle::default()
+                    .size(100.0, 100.0),
 
-            Circle::default()
-                .diameter(100.0)
-                .padding_left(40.0)
+                Loop::new(10, |idx|
+                    Circle::default()
+                        .diameter(10.0 * (idx + 1) as f64 / 2.0)
+                        .padding_left((idx * 20 + 1) as f64)
+                ),
+
+                Circle::default()
+                    .diameter(50.0)
+                    .padding_top(25.0)
+                    .padding_left(25.0),
+            ))
+            .size(100.0, 100.0),
+
         ))
+        .spacing(40.0)
         .size(430.0, 100.0),
 
         HStack::new((
-            Loop::new(20, |idx|
+            Loop::new(10, |idx|
                 Circle::default()
                     .diameter(10.0 * (idx + 1) as f64 / 2.0)
             ),

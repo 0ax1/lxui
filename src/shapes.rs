@@ -149,6 +149,55 @@ impl view::Draw for HStack {
     }
 }
 
+#[derive(AnyView)]
+pub struct ZStack {
+    view_base: view::Base,
+    elements: Vec<Box<dyn view::AnyView>>,
+}
+
+impl ZStack {
+    pub fn new<T: view::Group>(elements: T) -> ZStack {
+        ZStack {
+            view_base: view::Base::default(),
+            elements: elements.into_view_group(),
+        }
+    }
+}
+
+impl view::Draw for ZStack {
+    fn draw(&self, mut cx: view::Context, scene: &mut vello::Scene) {
+        println!("L{} ZStack {} {}", cx.level, self.size(), cx.origin);
+        cx.level += 1;
+
+        let process =
+            |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
+                element.draw(
+                    view::Context {
+                        // Apply the origin offset of the ZStack itself.
+                        origin: view::Origin {
+                            x: cx.origin.x + self.padding_left(),
+                            y: cx.origin.y + self.padding_top(),
+                        },
+                        ..*cx
+                    },
+                    scene,
+                );
+            };
+
+        // Given that the root view is a container and always drawn,
+        // only view containers need to check for element visibility.
+        for element in self.elements.iter().filter(|e| e.visible()) {
+            if let Some(list) = element.as_any().downcast_ref::<Loop>() {
+                for element in list.elements.iter().filter(|e| e.visible()) {
+                    process(element, &mut cx, scene);
+                }
+            } else {
+                process(element, &mut cx, scene);
+            }
+        }
+    }
+}
+
 #[derive(Default, AnyView)]
 pub struct Rectangle {
     view_base: view::Base,
