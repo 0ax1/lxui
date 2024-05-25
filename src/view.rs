@@ -74,31 +74,31 @@ impl std::fmt::Display for Size {
     }
 }
 
-pub trait Group {
-    fn into_view_group(self) -> Vec<Box<dyn AnyView>>;
+pub trait Container {
+    fn into_view_container(self) -> Vec<Box<dyn AnyView>>;
 }
 
-impl<T: AnyView + 'static> Group for T {
-    fn into_view_group(self) -> Vec<Box<dyn AnyView>> {
+impl<T: AnyView + 'static> Container for T {
+    fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
         vec![Box::new(self) as Box<dyn AnyView>]
     }
 }
 
-macro_rules! impl_into_view_group {
-        ($( { $($idx:tt $T:ident),+ } ),+ ) => {
-            $(
-                impl<$($T: AnyView + 'static),+> Group for ($($T,)+) {
-                    fn into_view_group(self) -> Vec<Box<dyn AnyView>> {
-                        vec![
-                            $(Box::new(self.$idx) as Box<dyn AnyView>,)+
-                        ]
-                    }
+macro_rules! impl_into_view_container {
+    ($( { $($idx:tt $T:ident),+ } ),+ ) => {
+        $(
+            impl<$($T: AnyView + 'static),+> Container for ($($T,)+) {
+                fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
+                    vec![
+                        $(Box::new(self.$idx) as Box<dyn AnyView>,)+
+                    ]
                 }
-            )+
-        }
+            }
+        )+
     }
+}
 
-impl_into_view_group! {
+impl_into_view_container! {
     { 0 T0 },
     { 0 T0, 1 T1 },
     { 0 T0, 1 T1, 2 T2 },

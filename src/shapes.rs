@@ -35,10 +35,10 @@ pub struct VStack {
 }
 
 impl VStack {
-    pub fn new<T: view::Group>(elements: T) -> VStack {
+    pub fn new<T: view::Container>(elements: T) -> VStack {
         VStack {
             view_base: view::Base::default(),
-            elements: elements.into_view_group(),
+            elements: elements.into_view_container(),
             spacing: 0.0,
         }
     }
@@ -96,11 +96,11 @@ pub struct HStack {
 }
 
 impl HStack {
-    pub fn new<T: view::Group>(elements: T) -> HStack {
+    pub fn new<T: view::Container>(elements: T) -> HStack {
         HStack {
             view_base: view::Base::default(),
             spacing: 0.0,
-            elements: elements.into_view_group(),
+            elements: elements.into_view_container(),
         }
     }
 
@@ -156,10 +156,10 @@ pub struct ZStack {
 }
 
 impl ZStack {
-    pub fn new<T: view::Group>(elements: T) -> ZStack {
+    pub fn new<T: view::Container>(elements: T) -> ZStack {
         ZStack {
             view_base: view::Base::default(),
-            elements: elements.into_view_group(),
+            elements: elements.into_view_container(),
         }
     }
 }
