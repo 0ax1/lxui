@@ -78,6 +78,12 @@ pub trait Container {
     fn into_view_container(self) -> Vec<Box<dyn AnyView>>;
 }
 
+impl Container for () {
+    fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
+        vec![]
+    }
+}
+
 impl<T: AnyView> Container for T {
     fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
         vec![Box::new(self) as Box<dyn AnyView>]
