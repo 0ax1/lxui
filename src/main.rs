@@ -125,9 +125,10 @@ fn view_tree() -> impl view::AnyView {
         .size(430.0, 100.0),
 
         HStack::new((
-            Loop::new(10, |idx|
+            Loop::new(14, |idx|
                 Circle::default()
                     .diameter(10.0 * (idx + 1) as f64 / 2.0)
+                    .visible(idx % 2 == 0)
             )
         ))
         .spacing(20.0)
