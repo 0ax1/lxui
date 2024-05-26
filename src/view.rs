@@ -1,7 +1,9 @@
 #[derive(Copy, Clone, Default)]
 pub struct Context {
     pub origin: Origin,
+    pub scale: f64,
     pub level: i32,
+    pub cursor_position: CursorPosition,
 }
 
 pub trait AnyView: Draw + ViewBase + std::any::Any {
@@ -28,6 +30,12 @@ pub trait ViewBase {
 
 #[derive(Debug, Copy, Clone, Default)]
 pub struct Origin {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Copy, Clone, Default)]
+pub struct CursorPosition {
     pub x: f64,
     pub y: f64,
 }

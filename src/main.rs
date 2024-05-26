@@ -32,6 +32,13 @@ fn init_runloop() {
     let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
 
+    let mut cx = view::Context {
+        origin: view::Origin { x: 0.0, y: 0.0 },
+        scale: 1.0,
+        level: 0,
+        cursor_position: view::CursorPosition { x: 0.0, y: 0.0 },
+    };
+
     #[allow(deprecated)]
     let result = event_loop.run(move |event, event_loop| match event {
         winit::event::Event::Resumed => {
@@ -75,6 +82,29 @@ fn init_runloop() {
             match event {
                 winit::event::WindowEvent::CloseRequested => event_loop.exit(),
 
+                winit::event::WindowEvent::CursorMoved { position, .. } => {
+                    cx.cursor_position = view::CursorPosition {
+                        x: position.x,
+                        y: position.y,
+                    };
+                    render_state.window.request_redraw();
+                }
+
+                winit::event::WindowEvent::KeyboardInput { event, .. } => {
+                    if event.state == winit::event::ElementState::Pressed {
+                        match event.logical_key.as_ref() {
+                            winit::keyboard::Key::Named(winit::keyboard::NamedKey::ArrowUp) => {
+                                cx.scale += 1.0;
+                                render_state.window.request_redraw();
+                            }
+                            winit::keyboard::Key::Named(winit::keyboard::NamedKey::ArrowDown) => {
+                                cx.scale -= 1.0;
+                                render_state.window.request_redraw();
+                            }
+                            _ => {}
+                        }
+                    }
+                }
                 winit::event::WindowEvent::Resized(size) => {
                     render_cx.resize_surface(&mut render_state.surface, size.width, size.height);
                     render_state.window.request_redraw();
@@ -82,13 +112,7 @@ fn init_runloop() {
 
                 winit::event::WindowEvent::RedrawRequested => {
                     scene.reset();
-                    view_tree().draw(
-                        view::Context {
-                            origin: view::Origin { x: 0.0, y: 0.0 },
-                            level: 0,
-                        },
-                        &mut scene,
-                    );
+                    view_tree().draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
                 }
                 _ => {}

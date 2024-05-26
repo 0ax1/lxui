@@ -214,7 +214,20 @@ impl view::Draw for Rectangle {
             cx.origin.y + self.padding_top() + self.height(),
         );
 
+        let is_hovered = (rect.x0..=rect.x1).contains(&cx.cursor_position.x)
+            && (rect.y0..=rect.y1).contains(&cx.cursor_position.y);
+
         let rect_stroke_color = Color::rgb(0.5, 0.5, 1.0);
+
+        if is_hovered {
+            scene.fill(
+                vello::peniko::Fill::NonZero,
+                vello::kurbo::Affine::IDENTITY,
+                rect_stroke_color,
+                None,
+                &rect,
+            );
+        }
         scene.stroke(
             &vello::kurbo::Stroke::new(2.0),
             vello::kurbo::Affine::IDENTITY,
