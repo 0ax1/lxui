@@ -26,6 +26,8 @@ pub trait ViewBase {
     fn padding_right(&self) -> f64;
     fn padding_vertical(&self) -> f64;
     fn padding_horizontal(&self) -> f64;
+
+    fn scale(&self, scale: f64);
 }
 
 #[derive(Debug, Copy, Clone, Default)]
@@ -54,6 +56,8 @@ pub struct Base {
     pub padding_bottom: f64,
     pub padding_left: f64,
     pub padding_right: f64,
+
+    pub scale: std::cell::Cell<f64>,
 }
 
 impl Default for Base {
@@ -66,6 +70,8 @@ impl Default for Base {
             padding_bottom: 0.0,
             padding_left: 0.0,
             padding_right: 0.0,
+
+            scale: std::cell::Cell::new(1.0),
         }
     }
 }

@@ -27,6 +27,31 @@ impl view::Draw for Loop {
     fn draw(&self, _: view::Context, _: &mut vello::Scene) {}
 }
 
+pub trait Stack: ViewBase {
+    fn elements(&self) -> &[Box<dyn view::AnyView>];
+
+    fn recurse(
+        &self,
+        mut cx: view::Context,
+        scene: &mut vello::Scene,
+        operation: impl Fn(&Box<dyn AnyView>, &mut view::Context, &mut vello::Scene),
+    ) {
+        self.scale(cx.scale);
+
+        for element in self.elements().iter().filter(|e| e.visible()) {
+            if let Some(list) = element.as_any().downcast_ref::<Loop>() {
+                for element in list.elements.iter().filter(|e| e.visible()) {
+                    element.scale(cx.scale);
+                    operation(element, &mut cx, scene);
+                }
+            } else {
+                element.scale(cx.scale);
+                operation(element, &mut cx, scene);
+            }
+        }
+    }
+}
+
 #[derive(AnyView)]
 pub struct VStack {
     view_base: view::Base,
@@ -46,6 +71,12 @@ impl VStack {
     pub fn spacing(mut self, distance: f64) -> Self {
         self.spacing = distance;
         self
+    }
+}
+
+impl Stack for VStack {
+    fn elements(&self) -> &[Box<dyn view::AnyView>] {
+        &self.elements
     }
 }
 
@@ -74,17 +105,7 @@ impl view::Draw for VStack {
                 cx.origin.y += self.spacing;
             };
 
-        // Given that the root view is a container and always drawn,
-        // only view containers need to check for element visibility.
-        for element in self.elements.iter().filter(|e| e.visible()) {
-            if let Some(list) = element.as_any().downcast_ref::<Loop>() {
-                for element in list.elements.iter().filter(|e| e.visible()) {
-                    process(element, &mut cx, scene);
-                }
-            } else {
-                process(element, &mut cx, scene);
-            }
-        }
+        self.recurse(cx, scene, process);
     }
 }
 
@@ -107,6 +128,12 @@ impl HStack {
     pub fn spacing(mut self, distance: f64) -> Self {
         self.spacing = distance;
         self
+    }
+}
+
+impl Stack for HStack {
+    fn elements(&self) -> &[Box<dyn view::AnyView>] {
+        &self.elements
     }
 }
 
@@ -137,15 +164,7 @@ impl view::Draw for HStack {
                 cx.origin.x += self.spacing;
             };
 
-        for element in self.elements.iter().filter(|e| e.visible()) {
-            if let Some(list) = element.as_any().downcast_ref::<Loop>() {
-                for element in list.elements.iter().filter(|e| e.visible()) {
-                    process(element, &mut cx, scene);
-                }
-            } else {
-                process(element, &mut cx, scene);
-            }
-        }
+        self.recurse(cx, scene, process);
     }
 }
 
@@ -161,6 +180,12 @@ impl ZStack {
             view_base: view::Base::default(),
             elements: elements.into_view_container(),
         }
+    }
+}
+
+impl Stack for ZStack {
+    fn elements(&self) -> &[Box<dyn view::AnyView>] {
+        &self.elements
     }
 }
 
@@ -184,17 +209,7 @@ impl view::Draw for ZStack {
                 );
             };
 
-        // Given that the root view is a container and always drawn,
-        // only view containers need to check for element visibility.
-        for element in self.elements.iter().filter(|e| e.visible()) {
-            if let Some(list) = element.as_any().downcast_ref::<Loop>() {
-                for element in list.elements.iter().filter(|e| e.visible()) {
-                    process(element, &mut cx, scene);
-                }
-            } else {
-                process(element, &mut cx, scene);
-            }
-        }
+        self.recurse(cx, scene, process);
     }
 }
 

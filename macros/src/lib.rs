@@ -54,15 +54,18 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
 
         impl ViewBase for #name {
             fn size(&self) -> view::Size {
-                self.view_base.size
+                view::Size {
+                    width: self.view_base.size.width * self.view_base.scale.get(),
+                    height: self.view_base.size.height * self.view_base.scale.get(),
+                }
             }
 
             fn width(&self) -> f64 {
-                self.view_base.size.width
+                self.view_base.size.width * self.view_base.scale.get()
             }
 
             fn height(&self) -> f64 {
-                self.view_base.size.height
+                self.view_base.size.height * self.view_base.scale.get()
             }
 
             fn visible(&self) -> bool {
@@ -70,27 +73,33 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
             }
 
             fn padding_top(&self) -> f64 {
-                self.view_base.padding_top
+                self.view_base.padding_top * self.view_base.scale.get()
             }
 
             fn padding_bottom(&self) -> f64 {
-                self.view_base.padding_bottom
+                self.view_base.padding_bottom * self.view_base.scale.get()
             }
 
             fn padding_left(&self) -> f64 {
-                self.view_base.padding_left
+                self.view_base.padding_left * self.view_base.scale.get()
             }
 
             fn padding_right(&self) -> f64 {
-                self.view_base.padding_right
+                self.view_base.padding_right * self.view_base.scale.get()
             }
 
             fn padding_horizontal(&self) -> f64 {
-                self.view_base.padding_left + self.view_base.padding_right
+                self.view_base.padding_left * self.view_base.scale.get()
+                + self.view_base.padding_right * self.view_base.scale.get()
             }
 
             fn padding_vertical(&self) -> f64 {
-                self.view_base.padding_top + self.view_base.padding_bottom
+                self.view_base.padding_top * self.view_base.scale.get()
+                + self.view_base.padding_bottom * self.view_base.scale.get()
+            }
+
+            fn scale(&self, scale: f64) {
+                self.view_base.scale.replace(scale);
             }
         }
 
