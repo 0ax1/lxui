@@ -1,6 +1,6 @@
 use crate::{view, *};
 use macros::*;
-use vello::peniko::Color;
+use vello::{kurbo, peniko};
 
 #[derive(AnyView)]
 pub struct Loop {
@@ -28,9 +28,9 @@ impl view::Draw for Loop {
 }
 
 pub trait Stack: ViewBase {
-    fn elements(&self) -> &[Box<dyn view::AnyView>];
+    fn view_sequence(&self) -> &[Box<dyn view::AnyView>];
 
-    fn recurse(
+    fn recurse_stack(
         &self,
         mut cx: view::Context,
         scene: &mut vello::Scene,
@@ -38,7 +38,7 @@ pub trait Stack: ViewBase {
     ) {
         self.scale(cx.scale);
 
-        for element in self.elements().iter().filter(|e| e.visible()) {
+        for element in self.view_sequence().iter().filter(|e| e.visible()) {
             if let Some(list) = element.as_any().downcast_ref::<Loop>() {
                 for element in list.elements.iter().filter(|e| e.visible()) {
                     element.scale(cx.scale);
@@ -75,7 +75,7 @@ impl VStack {
 }
 
 impl Stack for VStack {
-    fn elements(&self) -> &[Box<dyn view::AnyView>] {
+    fn view_sequence(&self) -> &[Box<dyn view::AnyView>] {
         &self.elements
     }
 }
@@ -105,7 +105,7 @@ impl view::Draw for VStack {
                 cx.origin.y += self.spacing;
             };
 
-        self.recurse(cx, scene, process);
+        self.recurse_stack(cx, scene, process);
     }
 }
 
@@ -132,7 +132,7 @@ impl HStack {
 }
 
 impl Stack for HStack {
-    fn elements(&self) -> &[Box<dyn view::AnyView>] {
+    fn view_sequence(&self) -> &[Box<dyn view::AnyView>] {
         &self.elements
     }
 }
@@ -164,7 +164,7 @@ impl view::Draw for HStack {
                 cx.origin.x += self.spacing;
             };
 
-        self.recurse(cx, scene, process);
+        self.recurse_stack(cx, scene, process);
     }
 }
 
@@ -184,7 +184,7 @@ impl ZStack {
 }
 
 impl Stack for ZStack {
-    fn elements(&self) -> &[Box<dyn view::AnyView>] {
+    fn view_sequence(&self) -> &[Box<dyn view::AnyView>] {
         &self.elements
     }
 }
@@ -209,53 +209,81 @@ impl view::Draw for ZStack {
                 );
             };
 
-        self.recurse(cx, scene, process);
+        self.recurse_stack(cx, scene, process);
+    }
+}
+
+enum Style {
+    Fill(Color),
+    Stroke(Color, f64),
+}
+
+impl Default for Style {
+    fn default() -> Self {
+        Style::Stroke(Color::rgb8(1, 1, 1), 1.0)
     }
 }
 
 #[derive(Default, AnyView)]
 pub struct Rectangle {
     view_base: view::Base,
+    fill: Option<peniko::Color>,
+    stroke: Option<(peniko::Color, f64)>,
+}
+
+impl Rectangle {
+    pub fn fill(mut self, color: Color) -> Self {
+        self.fill = Some(color);
+        self
+    }
+
+    pub fn stroke(mut self, color: Color, stroke_width: f64) -> Self {
+        self.stroke = Some((color, stroke_width));
+        self
+    }
 }
 
 impl view::Draw for Rectangle {
     fn draw(&self, cx: view::Context, scene: &mut vello::Scene) {
         println!("L{} Rectangle {} {}", cx.level, self.size(), cx.origin);
 
-        let rect = vello::kurbo::Rect::new(
+        let rect = kurbo::Rect::new(
             cx.origin.x + self.padding_left(),
             cx.origin.y + self.padding_top(),
             cx.origin.x + self.padding_left() + self.width(),
             cx.origin.y + self.padding_top() + self.height(),
         );
 
-        let is_hovered = (rect.x0..=rect.x1).contains(&cx.cursor_position.x)
+        let _is_hovered = (rect.x0..=rect.x1).contains(&cx.cursor_position.x)
             && (rect.y0..=rect.y1).contains(&cx.cursor_position.y);
 
-        let rect_stroke_color = Color::rgb(0.5, 0.5, 1.0);
-
-        if is_hovered {
+        if let Some(color) = self.fill {
             scene.fill(
-                vello::peniko::Fill::NonZero,
-                vello::kurbo::Affine::IDENTITY,
-                rect_stroke_color,
+                peniko::Fill::NonZero,
+                kurbo::Affine::IDENTITY,
+                color,
                 None,
                 &rect,
             );
         }
-        scene.stroke(
-            &vello::kurbo::Stroke::new(2.0),
-            vello::kurbo::Affine::IDENTITY,
-            rect_stroke_color,
-            None,
-            &rect,
-        );
+
+        if let Some((color, stroke_width)) = self.stroke {
+            scene.stroke(
+                &kurbo::Stroke::new(stroke_width).with_join(kurbo::Join::Miter),
+                kurbo::Affine::IDENTITY,
+                color,
+                None,
+                &rect,
+            );
+        }
     }
 }
 
 #[derive(Default, AnyView)]
 pub struct Circle {
     view_base: view::Base,
+    fill: Option<peniko::Color>,
+    stroke: Option<(peniko::Color, f64)>,
 }
 
 impl Circle {
@@ -266,13 +294,22 @@ impl Circle {
     pub fn radius(self, radius: f64) -> Self {
         self.size(radius * 2.0, radius * 2.0)
     }
+
+    pub fn fill(mut self, color: Color) -> Self {
+        self.fill = Some(color);
+        self
+    }
+
+    pub fn stroke(mut self, color: Color, stroke_width: f64) -> Self {
+        self.stroke = Some((color, stroke_width));
+        self
+    }
 }
 
 impl view::Draw for Circle {
     fn draw(&self, cx: view::Context, scene: &mut vello::Scene) {
         println!("L{} Circle {} {}", cx.level, self.size(), cx.origin);
 
-        // Draw a filled circle
         let circle = vello::kurbo::Circle::new(
             (
                 cx.origin.x + self.padding_left() + self.width() / 2.0,
@@ -281,13 +318,24 @@ impl view::Draw for Circle {
             self.width() / 2.0,
         );
 
-        let circle_fill_color = Color::rgb(1.0, 1.0, 1.0);
-        scene.fill(
-            vello::peniko::Fill::NonZero,
-            vello::kurbo::Affine::IDENTITY,
-            circle_fill_color,
-            None,
-            &circle,
-        );
+        if let Some(color) = self.fill {
+            scene.fill(
+                peniko::Fill::NonZero,
+                kurbo::Affine::IDENTITY,
+                color,
+                None,
+                &circle,
+            );
+        }
+
+        if let Some((color, stroke_width)) = self.stroke {
+            scene.stroke(
+                &kurbo::Stroke::new(stroke_width),
+                kurbo::Affine::IDENTITY,
+                color,
+                None,
+                &circle,
+            );
+        }
     }
 }

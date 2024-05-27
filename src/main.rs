@@ -10,7 +10,11 @@ mod rendering;
 use rendering::*;
 
 use winit::dpi::LogicalSize;
+use winit::event::*;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::*;
+
+use vello::peniko::Color;
 
 fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::window::Window> {
     let attr = winit::window::Window::default_attributes()
@@ -66,23 +70,23 @@ fn init_runloop() {
             event_loop.set_control_flow(ControlFlow::Poll);
         }
 
-        winit::event::Event::Suspended => {
+        Event::Suspended => {
             if let RenderState::Active(state) = &render_state {
                 render_state = RenderState::Suspended(Some(state.window.clone()));
             }
             event_loop.set_control_flow(ControlFlow::Wait);
         }
 
-        winit::event::Event::WindowEvent { event, window_id } => {
+        Event::WindowEvent { event, window_id } => {
             let render_state = match &mut render_state {
                 RenderState::Active(state) if state.window.id() == window_id => state,
                 _ => return,
             };
 
             match event {
-                winit::event::WindowEvent::CloseRequested => event_loop.exit(),
+                WindowEvent::CloseRequested => event_loop.exit(),
 
-                winit::event::WindowEvent::CursorMoved { position, .. } => {
+                WindowEvent::CursorMoved { position, .. } => {
                     cx.cursor_position = view::CursorPosition {
                         x: position.x,
                         y: position.y,
@@ -90,14 +94,14 @@ fn init_runloop() {
                     render_state.window.request_redraw();
                 }
 
-                winit::event::WindowEvent::KeyboardInput { event, .. } => {
-                    if event.state == winit::event::ElementState::Pressed {
+                WindowEvent::KeyboardInput { event, .. } => {
+                    if event.state == ElementState::Pressed {
                         match event.logical_key.as_ref() {
-                            winit::keyboard::Key::Named(winit::keyboard::NamedKey::ArrowUp) => {
+                            Key::Named(NamedKey::ArrowUp) => {
                                 cx.scale += 1.0;
                                 render_state.window.request_redraw();
                             }
-                            winit::keyboard::Key::Named(winit::keyboard::NamedKey::ArrowDown) => {
+                            Key::Named(NamedKey::ArrowDown) => {
                                 cx.scale -= 1.0;
                                 render_state.window.request_redraw();
                             }
@@ -105,12 +109,12 @@ fn init_runloop() {
                         }
                     }
                 }
-                winit::event::WindowEvent::Resized(size) => {
+                WindowEvent::Resized(size) => {
                     render_cx.resize_surface(&mut render_state.surface, size.width, size.height);
                     render_state.window.request_redraw();
                 }
 
-                winit::event::WindowEvent::RedrawRequested => {
+                WindowEvent::RedrawRequested => {
                     scene.reset();
                     view_tree().draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
@@ -129,17 +133,22 @@ fn view_tree() -> impl view::AnyView {
     VStack::new((
         HStack::new((
             Rectangle::default()
-                .size(100.0, 100.0),
+                .size(100.0, 100.0)
+                .stroke(Color::rgb8(122, 122, 255), 2.0),
 
             Circle::default()
+                .stroke(Color::rgb8(255, 255, 255), 4.0)
                 .diameter(100.0),
 
             ZStack::new((
                 Rectangle::default()
-                    .size(100.0, 100.0),
+                    .size(100.0, 100.0)
+                    .fill(Color::rgba8(255, 255, 255, 122))
+                    .stroke(Color::rgb8(255, 255, 255), 2.0),
 
                 Circle::default()
                     .diameter(50.0)
+                    .fill(Color::rgb8(122, 122, 255))
                     .padding_top(25.0)
                     .padding_left(25.0),
             ))
@@ -151,6 +160,7 @@ fn view_tree() -> impl view::AnyView {
         HStack::new((
             Loop::new(14, |idx|
                 Circle::default()
+                    .fill(Color::rgb8(255, 255, 255))
                     .diameter(10.0 * (idx + 1) as f64 / 2.0)
                     .visible(idx % 2 == 0)
             )

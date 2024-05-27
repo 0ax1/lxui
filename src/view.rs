@@ -26,7 +26,6 @@ pub trait ViewBase {
     fn padding_right(&self) -> f64;
     fn padding_vertical(&self) -> f64;
     fn padding_horizontal(&self) -> f64;
-
     fn scale(&self, scale: f64);
 }
 
