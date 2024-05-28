@@ -50,11 +50,16 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
                 self.view_base.padding_bottom = padding;
                 self
             }
+
+            pub fn on_click(mut self, on_click: impl Fn() + 'static) -> Self {
+                self.view_base.on_click = Some(Box::new(on_click));
+                self
+            }
         }
 
         impl ViewBase for #name {
-            fn size(&self) -> view::Size {
-                view::Size {
+            fn size(&self) -> core::Size {
+                core::Size {
                     width: self.view_base.size.width ,
                     height: self.view_base.size.height ,
                 }
@@ -97,9 +102,13 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
                 self.view_base.padding_top
                 + self.view_base.padding_bottom
             }
+
+            fn on_click(&self) -> &Option<Box<dyn Fn()>> {
+                &self.view_base.on_click
+            }
         }
 
-        impl view::AnyView for #name {
+        impl core::AnyView for #name {
             fn as_any(&self) -> &dyn std::any::Any {
                 self
             }

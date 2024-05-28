@@ -1,13 +1,16 @@
 #![allow(dead_code, unused_parens)]
 
+mod core;
+use core::*;
+
 mod view;
 use view::*;
 
-mod shapes;
-use shapes::*;
-
 mod rendering;
 use rendering::*;
+
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use winit::dpi::LogicalSize;
 use winit::event::*;
@@ -18,8 +21,9 @@ use vello::peniko::Color;
 
 fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::window::Window> {
     let attr = winit::window::Window::default_attributes()
-        .with_inner_size(LogicalSize::new(750, 180))
+        .with_inner_size(LogicalSize::new(600, 300))
         .with_resizable(true)
+        .with_active(true)
         .with_title("fors: gpu go brr");
 
     std::sync::Arc::new(
@@ -36,11 +40,11 @@ fn init_runloop() {
     let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
 
-    let mut cx = view::Context {
-        origin: view::Origin { x: 0.0, y: 0.0 },
+    let mut cx = core::Context {
+        origin: core::Origin { x: 0.0, y: 0.0 },
         scale: 1.0,
         level: 0,
-        cursor_position: view::CursorPosition { x: 0.0, y: 0.0 },
+        cursor_position: core::CursorPosition { x: 0.0, y: 0.0 },
     };
 
     #[allow(deprecated)]
@@ -87,11 +91,16 @@ fn init_runloop() {
                 WindowEvent::CloseRequested => event_loop.exit(),
 
                 WindowEvent::CursorMoved { position, .. } => {
-                    cx.cursor_position = view::CursorPosition {
+                    cx.cursor_position = core::CursorPosition {
                         x: position.x,
                         y: position.y,
                     };
-                    render_state.window.request_redraw();
+                }
+
+                WindowEvent::MouseInput { state, button, .. } => {
+                    if button == MouseButton::Left && state == ElementState::Pressed {
+                        println!("click");
+                    }
                 }
 
                 WindowEvent::KeyboardInput { event, .. } => {
@@ -116,7 +125,8 @@ fn init_runloop() {
 
                 WindowEvent::RedrawRequested => {
                     scene.reset();
-                    view_tree().draw(cx, &mut scene);
+                    let view_tree = ViewTree::new();
+                    view_tree.tree.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
                 }
                 _ => {}
@@ -128,52 +138,79 @@ fn init_runloop() {
     println!("{:?}", result);
 }
 
-#[rustfmt::skip]
-fn view_tree() -> impl view::AnyView {
-    VStack::new((
-        HStack::new((
-            Rectangle::default()
-                .size(100.0, 100.0)
-                .stroke(Color::rgb8(122, 122, 255), 2.0),
+struct ViewTree {
+    pub state: Rc<RefCell<i32>>,
+    pub tree: VStack,
+}
 
-            Circle::default()
-                .stroke(Color::rgb8(255, 255, 255), 4.0)
-                .diameter(100.0),
+impl ViewTree {
+    fn new() -> Self {
+        let state = Rc::new(RefCell::new(0));
 
-            ZStack::new((
+        ViewTree {
+            state: state.clone(),
+            tree: ViewTree::build(state),
+        }
+    }
+
+    #[rustfmt::skip]
+    fn build(state: Rc<RefCell<i32>>) -> VStack {
+
+        VStack::new((
+            HStack::new((
                 Rectangle::default()
                     .size(100.0, 100.0)
-                    .fill(Color::rgba8(255, 255, 255, 122))
-                    .stroke(Color::rgb8(255, 255, 255), 2.0),
+                    .stroke(Color::rgb8(122, 122, 255), 2.0)
+                    .on_click(event::callback(&state, {
+                        |state| {
+                            println!("clicked {}", state);
+                        }
+                    })),
 
                 Circle::default()
-                    .diameter(50.0)
-                    .fill(Color::rgb8(122, 122, 255))
-                    .padding_top(25.0)
-                    .padding_left(25.0),
-            ))
-            .size(100.0, 100.0),
-        ))
-        .spacing(40.0)
-        .size(430.0, 100.0),
+                    .stroke(Color::rgb8(255, 255, 255), 4.0)
+                    .diameter(100.0),
 
-        HStack::new((
-            Loop::new(0..5, |idx|
-                Loop::new(0..5, |idx2|
+                ZStack::new((
+                    Rectangle::default()
+                        .size(100.0, 100.0)
+                        .fill(Color::rgba8(255, 255, 255, 122))
+                        .stroke(Color::rgb8(255, 255, 255), 2.0),
+
                     Circle::default()
-                        .fill(Color::rgb8(40 * idx2 as u8, 40 * idx2 as u8, 40 * idx2 as u8))
-                        .diameter(10.0 * (idx + 1) as f64 / 2.0)
-                        .visible(idx % 2 == 0)
-                    )
-            )
+                        .diameter(50.0)
+                        .fill(Color::rgb8(122, 122, 255))
+                        .padding_top(25.0)
+                        .padding_left(25.0),
+                ))
+                .size(100.0, 100.0),
+            ))
+            .spacing(40.0)
+            .size(430.0, 100.0),
+
+            HStack::new((
+                Loop::new(0..10, |idx|
+                    VStack::new((
+                        Loop::new(0..10, |idx2|
+                            Circle::default()
+                                .stroke(Color::rgba8(122, 122, 255, 50), 2.0)
+                                .fill(Color::rgb8(25 * idx2 as u8, 25 * idx2 as u8, 25 * idx2 as u8))
+                                .diameter(10.0 * (idx + 1) as f64 / 2.0)
+                                .visible(idx % 2 == 0)
+                            )
+                    ))
+                    .size(5.0 * (idx + 1) as f64, 1000.0)
+                    .spacing(20.0)
+                )
+            ))
+            .spacing(20.0)
+            .size(830.0, 200.0),
         ))
-        .spacing(20.0)
-        .size(830.0, 200.0),
-    ))
-    .size(620.0, 300.0)
-    .spacing(100.0)
-    .padding_top(40.0)
-    .padding_left(40.0)
+        .size(620.0, 300.0)
+        .spacing(100.0)
+        .padding_top(40.0)
+        .padding_left(40.0)
+    }
 }
 
 fn main() {
