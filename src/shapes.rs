@@ -9,14 +9,14 @@ pub struct Loop {
 }
 
 impl Loop {
-    pub fn new<F, T>(count: i32, func: F) -> Loop
+    pub fn new<F, T>(range: std::ops::Range<u32>, func: F) -> Loop
     where
         T: AnyView,
-        F: Fn(i32) -> T,
+        F: Fn(u32) -> T,
     {
         Loop {
             view_base: view::Base::default(),
-            elements: (0..count)
+            elements: range
                 .map(|idx| Box::new(func(idx)) as Box<dyn AnyView>)
                 .collect(),
         }
@@ -30,20 +30,19 @@ impl view::Draw for Loop {
 pub trait Stack: ViewBase {
     fn view_sequence(&self) -> &[Box<dyn view::AnyView>];
 
-    fn recurse_stack(
-        &self,
-        mut cx: view::Context,
-        scene: &mut vello::Scene,
-        operation: impl Fn(&Box<dyn AnyView>, &mut view::Context, &mut vello::Scene),
-    ) {
-        for element in self.view_sequence().iter().filter(|e| e.visible()) {
+    fn recurse_stack(&self, mut operation: impl FnMut(&Box<dyn AnyView>)) {
+        fn r(element: &Box<dyn AnyView>, operation: &mut dyn FnMut(&Box<dyn AnyView>)) {
             if let Some(list) = element.as_any().downcast_ref::<Loop>() {
                 for element in list.elements.iter().filter(|e| e.visible()) {
-                    operation(element, &mut cx, scene);
+                    r(element, operation);
                 }
             } else {
-                operation(element, &mut cx, scene);
+                operation(element);
             }
+        }
+
+        for element in self.view_sequence().iter().filter(|e| e.visible()) {
+            r(element, &mut operation);
         }
     }
 }
@@ -81,27 +80,26 @@ impl view::Draw for VStack {
         println!("L{} VStack {} {}", cx.level, self.size(), cx.origin);
         cx.level += 1;
 
-        let process =
-            |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
-                element.draw(
-                    view::Context {
-                        // Apply the origin offset of the VStack itself.
-                        origin: view::Origin {
-                            x: cx.origin.x + self.padding_left(),
-                            y: cx.origin.y + self.padding_top(),
-                        },
-                        ..*cx
+        let process = |element: &Box<dyn AnyView>| {
+            element.draw(
+                view::Context {
+                    // Apply the origin offset of the VStack itself.
+                    origin: view::Origin {
+                        x: cx.origin.x + self.padding_left(),
+                        y: cx.origin.y + self.padding_top(),
                     },
-                    scene,
-                );
+                    ..cx
+                },
+                scene,
+            );
 
-                // Offset origin.y for the next element in the VStack.
-                cx.origin.y += element.height();
-                cx.origin.y += element.padding_vertical();
-                cx.origin.y += self.spacing;
-            };
+            // Offset origin.y for the next element in the VStack.
+            cx.origin.y += element.height();
+            cx.origin.y += element.padding_vertical();
+            cx.origin.y += self.spacing;
+        };
 
-        self.recurse_stack(cx, scene, process);
+        self.recurse_stack(process);
     }
 }
 
@@ -140,27 +138,26 @@ impl view::Draw for HStack {
 
         // Given that the root view is a container and always drawn,
         // only view containers need to check for element visibility.
-        let process =
-            |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
-                element.draw(
-                    view::Context {
-                        // Apply the origin offset of the HStack itself.
-                        origin: view::Origin {
-                            x: cx.origin.x + self.padding_left(),
-                            y: cx.origin.y + self.padding_top(),
-                        },
-                        ..*cx
+        let process = |element: &Box<dyn AnyView>| {
+            element.draw(
+                view::Context {
+                    // Apply the origin offset of the HStack itself.
+                    origin: view::Origin {
+                        x: cx.origin.x + self.padding_left(),
+                        y: cx.origin.y + self.padding_top(),
                     },
-                    scene,
-                );
+                    ..cx
+                },
+                scene,
+            );
 
-                // Offset origin.x for the next element in the HStack.
-                cx.origin.x += element.width();
-                cx.origin.x += element.padding_horizontal();
-                cx.origin.x += self.spacing;
-            };
+            // Offset origin.x for the next element in the HStack.
+            cx.origin.x += element.width();
+            cx.origin.x += element.padding_horizontal();
+            cx.origin.x += self.spacing;
+        };
 
-        self.recurse_stack(cx, scene, process);
+        self.recurse_stack(process);
     }
 }
 
@@ -190,22 +187,21 @@ impl view::Draw for ZStack {
         println!("L{} ZStack {} {}", cx.level, self.size(), cx.origin);
         cx.level += 1;
 
-        let process =
-            |element: &Box<dyn AnyView>, cx: &mut view::Context, scene: &mut vello::Scene| {
-                element.draw(
-                    view::Context {
-                        // Apply the origin offset of the ZStack itself.
-                        origin: view::Origin {
-                            x: cx.origin.x + self.padding_left(),
-                            y: cx.origin.y + self.padding_top(),
-                        },
-                        ..*cx
+        let process = |element: &Box<dyn AnyView>| {
+            element.draw(
+                view::Context {
+                    // Apply the origin offset of the ZStack itself.
+                    origin: view::Origin {
+                        x: cx.origin.x + self.padding_left(),
+                        y: cx.origin.y + self.padding_top(),
                     },
-                    scene,
-                );
-            };
+                    ..cx
+                },
+                scene,
+            );
+        };
 
-        self.recurse_stack(cx, scene, process);
+        self.recurse_stack(process);
     }
 }
 
