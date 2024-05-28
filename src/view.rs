@@ -26,7 +26,6 @@ pub trait ViewBase {
     fn padding_right(&self) -> f64;
     fn padding_vertical(&self) -> f64;
     fn padding_horizontal(&self) -> f64;
-    fn scale(&self, scale: f64);
 }
 
 #[derive(Debug, Copy, Clone, Default)]
@@ -55,8 +54,6 @@ pub struct Base {
     pub padding_bottom: f64,
     pub padding_left: f64,
     pub padding_right: f64,
-
-    pub scale: std::cell::Cell<f64>,
 }
 
 impl Default for Base {
@@ -69,8 +66,6 @@ impl Default for Base {
             padding_bottom: 0.0,
             padding_left: 0.0,
             padding_right: 0.0,
-
-            scale: std::cell::Cell::new(1.0),
         }
     }
 }
@@ -87,27 +82,27 @@ impl std::fmt::Display for Size {
     }
 }
 
-pub trait Container {
-    fn into_view_container(self) -> Vec<Box<dyn AnyView>>;
+pub trait ViewSequence {
+    fn into_view_sequence(self) -> Vec<Box<dyn AnyView>>;
 }
 
-impl Container for () {
-    fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
+impl ViewSequence for () {
+    fn into_view_sequence(self) -> Vec<Box<dyn AnyView>> {
         vec![]
     }
 }
 
-impl<T: AnyView> Container for T {
-    fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
+impl<T: AnyView> ViewSequence for T {
+    fn into_view_sequence(self) -> Vec<Box<dyn AnyView>> {
         vec![Box::new(self) as Box<dyn AnyView>]
     }
 }
 
-macro_rules! impl_into_view_container {
+macro_rules! impl_into_view_sequence {
     ($( { $($idx:tt $T:ident),+ } ),+ ) => {
         $(
-            impl<$($T: AnyView),+> Container for ($($T,)+) {
-                fn into_view_container(self) -> Vec<Box<dyn AnyView>> {
+            impl<$($T: AnyView),+> ViewSequence for ($($T,)+) {
+                fn into_view_sequence(self) -> Vec<Box<dyn AnyView>> {
                     vec![
                         $(Box::new(self.$idx) as Box<dyn AnyView>,)+
                     ]
@@ -117,7 +112,7 @@ macro_rules! impl_into_view_container {
     }
 }
 
-impl_into_view_container! {
+impl_into_view_sequence! {
     { 0 T0 },
     { 0 T0, 1 T1 },
     { 0 T0, 1 T1, 2 T2 },

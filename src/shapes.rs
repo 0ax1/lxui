@@ -36,16 +36,12 @@ pub trait Stack: ViewBase {
         scene: &mut vello::Scene,
         operation: impl Fn(&Box<dyn AnyView>, &mut view::Context, &mut vello::Scene),
     ) {
-        self.scale(cx.scale);
-
         for element in self.view_sequence().iter().filter(|e| e.visible()) {
             if let Some(list) = element.as_any().downcast_ref::<Loop>() {
                 for element in list.elements.iter().filter(|e| e.visible()) {
-                    element.scale(cx.scale);
                     operation(element, &mut cx, scene);
                 }
             } else {
-                element.scale(cx.scale);
                 operation(element, &mut cx, scene);
             }
         }
@@ -60,10 +56,10 @@ pub struct VStack {
 }
 
 impl VStack {
-    pub fn new<T: view::Container>(elements: T) -> VStack {
+    pub fn new<T: view::ViewSequence>(elements: T) -> VStack {
         VStack {
             view_base: view::Base::default(),
-            elements: elements.into_view_container(),
+            elements: elements.into_view_sequence(),
             spacing: 0.0,
         }
     }
@@ -117,11 +113,11 @@ pub struct HStack {
 }
 
 impl HStack {
-    pub fn new<T: view::Container>(elements: T) -> HStack {
+    pub fn new<T: view::ViewSequence>(elements: T) -> HStack {
         HStack {
             view_base: view::Base::default(),
             spacing: 0.0,
-            elements: elements.into_view_container(),
+            elements: elements.into_view_sequence(),
         }
     }
 
@@ -175,10 +171,10 @@ pub struct ZStack {
 }
 
 impl ZStack {
-    pub fn new<T: view::Container>(elements: T) -> ZStack {
+    pub fn new<T: view::ViewSequence>(elements: T) -> ZStack {
         ZStack {
             view_base: view::Base::default(),
-            elements: elements.into_view_container(),
+            elements: elements.into_view_sequence(),
         }
     }
 }
