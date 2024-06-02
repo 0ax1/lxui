@@ -1,5 +1,4 @@
 use crate::{core, *};
-use macros::*;
 use vello::{kurbo, peniko};
 
 pub mod event {

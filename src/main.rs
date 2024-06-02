@@ -1,5 +1,7 @@
 #![allow(dead_code, unused_parens)]
 
+use macros::AnyView;
+
 mod core;
 use core::*;
 
@@ -39,6 +41,7 @@ fn init_runloop() {
     let mut render_state = RenderState::Suspended(None);
     let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
+    let view_tree = ViewTree::new();
 
     let mut cx = core::Context {
         origin: core::Origin { x: 0.0, y: 0.0 },
@@ -125,8 +128,7 @@ fn init_runloop() {
 
                 WindowEvent::RedrawRequested => {
                     scene.reset();
-                    let view_tree = ViewTree::new();
-                    view_tree.tree.draw(cx, &mut scene);
+                    view_tree.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
                 }
                 _ => {}
@@ -138,16 +140,25 @@ fn init_runloop() {
     println!("{:?}", result);
 }
 
-struct ViewTree {
-    pub state: Rc<RefCell<i32>>,
-    pub tree: VStack,
+#[derive(AnyView)]
+pub struct ViewTree {
+    view_base: core::Base,
+    state: Rc<RefCell<i32>>,
+    tree: VStack,
+}
+
+impl Draw for ViewTree {
+    fn draw(&self, cx: Context, scene: &mut vello::Scene) {
+        self.tree.draw(cx, scene);
+    }
 }
 
 impl ViewTree {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let state = Rc::new(RefCell::new(0));
 
         ViewTree {
+            view_base: core::Base::default(),
             state: state.clone(),
             tree: ViewTree::build(state),
         }
@@ -155,7 +166,6 @@ impl ViewTree {
 
     #[rustfmt::skip]
     fn build(state: Rc<RefCell<i32>>) -> VStack {
-
         VStack::new((
             HStack::new((
                 Rectangle::default()
