@@ -9,8 +9,7 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         impl #name {
             pub fn size(mut self, width: f64, height: f64) -> Self {
-                self.view_base.size.width = width;
-                self.view_base.size.height = height;
+                self.view_base.size.set(Size { width, height });
                 self
             }
 
@@ -60,17 +59,17 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
         impl ViewBase for #name {
             fn size(&self) -> core::Size {
                 core::Size {
-                    width: self.view_base.size.width ,
-                    height: self.view_base.size.height ,
+                    width: self.view_base.size.get().width,
+                    height: self.view_base.size.get().height
                 }
             }
 
             fn width(&self) -> f64 {
-                self.view_base.size.width
+                self.view_base.size.get().width
             }
 
             fn height(&self) -> f64 {
-                self.view_base.size.height
+                self.view_base.size.get().height
             }
 
             fn visible(&self) -> bool {

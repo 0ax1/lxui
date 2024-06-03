@@ -193,10 +193,8 @@ impl ViewTree {
                         .padding_top(25.0)
                         .padding_left(25.0),
                 ))
-                .size(100.0, 100.0),
             ))
-            .spacing(40.0)
-            .size(430.0, 100.0),
+            .spacing(40.0),
 
             HStack::new((
                 Loop::new(0..10, |idx|
@@ -209,14 +207,11 @@ impl ViewTree {
                                 .visible(idx % 2 == 0)
                             )
                     ))
-                    .size(5.0 * (idx + 1) as f64, 1000.0)
                     .spacing(20.0)
                 )
             ))
             .spacing(20.0)
-            .size(830.0, 200.0),
         ))
-        .size(620.0, 300.0)
         .spacing(100.0)
         .padding_top(40.0)
         .padding_left(40.0)

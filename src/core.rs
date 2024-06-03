@@ -49,7 +49,7 @@ pub struct Size {
 }
 
 pub struct Base {
-    pub size: Size,
+    pub size: std::cell::Cell<Size>,
     pub visible: bool,
 
     pub padding_top: f64,
@@ -63,7 +63,7 @@ pub struct Base {
 impl Default for Base {
     fn default() -> Self {
         Self {
-            size: Size::default(),
+            size: std::cell::Cell::new(Size::default()),
             visible: true,
 
             padding_top: 0.0,

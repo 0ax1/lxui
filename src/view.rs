@@ -89,8 +89,10 @@ impl Stack for VStack {
 
 impl core::Draw for VStack {
     fn draw(&self, mut cx: core::Context, scene: &mut vello::Scene) {
-        println!("L{} VStack {} {}", cx.level, self.size(), cx.origin);
         cx.level += 1;
+        let mut width = 0.0;
+        let mut height = 0.0;
+        let mut element_count = 0.0;
 
         let process = |element: &Box<dyn AnyView>| {
             element.draw(
@@ -106,12 +108,29 @@ impl core::Draw for VStack {
             );
 
             // Offset origin.y for the next element in the VStack.
-            cx.origin.y += element.height();
-            cx.origin.y += element.padding_vertical();
-            cx.origin.y += self.spacing;
+            cx.origin.y += element.height() + element.padding_vertical() + self.spacing;
+            height += element.height() + element.padding_vertical();
+            width = f64::max(width, element.width() + element.padding_horizontal());
+            element_count += 1.0;
         };
 
         self.recurse_stack(process);
+
+        if self.width() == 0.0 {
+            self.view_base.size.set(core::Size {
+                width: width + self.padding_horizontal(),
+                height: self.height(),
+            });
+        }
+
+        if self.height() == 0.0 {
+            self.view_base.size.set(core::Size {
+                width: self.width(),
+                height: height + self.padding_vertical() + ((element_count - 1.0) * self.spacing),
+            });
+        }
+
+        println!("L{} VStack {}", cx.level, self.size());
     }
 }
 
@@ -145,8 +164,10 @@ impl Stack for HStack {
 
 impl core::Draw for HStack {
     fn draw(&self, mut cx: core::Context, scene: &mut vello::Scene) {
-        println!("L{} HStack {} {}", cx.level, self.size(), cx.origin);
         cx.level += 1;
+        let mut width = 0.0;
+        let mut height = 0.0;
+        let mut element_count = 0.0;
 
         // Given that the root view is a container and always drawn,
         // only view containers need to check for element visibility.
@@ -164,12 +185,29 @@ impl core::Draw for HStack {
             );
 
             // Offset origin.x for the next element in the HStack.
-            cx.origin.x += element.width();
-            cx.origin.x += element.padding_horizontal();
-            cx.origin.x += self.spacing;
+            cx.origin.x += element.width() + element.padding_horizontal() + self.spacing;
+            width += element.width() + element.padding_horizontal();
+            height = f64::max(height, element.height() + element.padding_vertical());
+            element_count += 1.0;
         };
 
         self.recurse_stack(process);
+
+        if self.width() == 0.0 {
+            self.view_base.size.set(core::Size {
+                width: width + self.padding_horizontal() + ((element_count - 1.0) * self.spacing),
+                height: self.height(),
+            });
+        }
+
+        if self.height() == 0.0 {
+            self.view_base.size.set(core::Size {
+                width: self.width(),
+                height: height + self.padding_vertical(),
+            });
+        }
+
+        println!("L{} HStack {}", cx.level, self.size());
     }
 }
 
@@ -196,8 +234,9 @@ impl Stack for ZStack {
 
 impl core::Draw for ZStack {
     fn draw(&self, mut cx: core::Context, scene: &mut vello::Scene) {
-        println!("L{} ZStack {} {}", cx.level, self.size(), cx.origin);
         cx.level += 1;
+        let mut width = 0.0;
+        let mut height = 0.0;
 
         let process = |element: &Box<dyn AnyView>| {
             element.draw(
@@ -211,9 +250,28 @@ impl core::Draw for ZStack {
                 },
                 scene,
             );
+
+            width = f64::max(width, element.width() + element.padding_horizontal());
+            height = f64::max(height, element.height() + element.padding_vertical());
         };
 
         self.recurse_stack(process);
+
+        if self.width() == 0.0 {
+            self.view_base.size.set(core::Size {
+                width: width + self.padding_horizontal(),
+                height: self.height(),
+            });
+        }
+
+        if self.height() == 0.0 {
+            self.view_base.size.set(core::Size {
+                width: self.width(),
+                height: height + self.padding_vertical(),
+            });
+        }
+
+        println!("L{} ZStack {}", cx.level, self.size());
     }
 }
 
