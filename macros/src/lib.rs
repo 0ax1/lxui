@@ -6,10 +6,10 @@ use syn::{parse_macro_input, DeriveInput};
 pub fn derive_view_base(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = input.ident;
-    let expanded = quote! {
+    let mut expanded = quote! {
         impl #name {
             pub fn size(mut self, width: f64, height: f64) -> Self {
-                self.view_base.size.set(Size { width, height });
+                self.view_base.size.set(vello::kurbo::Size { width, height });
                 self
             }
 
@@ -57,11 +57,25 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
         }
 
         impl ViewBase for #name {
-            fn size(&self) -> core::Size {
-                core::Size {
+            fn rect(&self) -> vello::kurbo::Rect {
+                let origin = self.view_base.origin.get();
+                vello::kurbo::Rect {
+                    x0: origin.x,
+                    y0: origin.y,
+                    x1: origin.x + self.width(),
+                    y1: origin.y + self.height(),
+                }
+            }
+
+            fn size(&self) -> vello::kurbo::Size {
+                vello::kurbo::Size {
                     width: self.view_base.size.get().width * ui_scale(),
                     height: self.view_base.size.get().height * ui_scale()
                 }
+            }
+
+            fn origin(&self) -> vello::kurbo::Point {
+                self.view_base.origin.get()
             }
 
             fn width(&self) -> f64 {
@@ -114,6 +128,23 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
         }
 
     };
+
+    if !["ViewTree", "VStack", "HStack", "ZStack"].contains(&name.to_string().as_str()) {
+        let expanded2 = quote! {
+            impl core::Layout for #name {
+                fn layout(&self, cx: Context) {
+                    self.view_base.origin.set(
+                        vello::kurbo::Point {
+                            x: cx.origin.x + self.padding_left(),
+                            y: cx.origin.y + self.padding_top(),
+                        }
+                    )
+                }
+            }
+        };
+
+        expanded.extend(expanded2);
+    }
 
     TokenStream::from(expanded)
 }

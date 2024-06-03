@@ -19,11 +19,12 @@ use winit::event::*;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::*;
 
+use vello::kurbo;
 use vello::peniko::Color;
 
 fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::window::Window> {
     let attr = winit::window::Window::default_attributes()
-        .with_inner_size(LogicalSize::new(600, 300))
+        .with_inner_size(LogicalSize::new(600, 600))
         .with_resizable(true)
         .with_active(true)
         .with_title("fors: gpu go brr");
@@ -44,10 +45,9 @@ fn init_runloop() {
     let view_tree = ViewTree::new();
 
     let mut cx = core::Context {
-        origin: core::Origin { x: 0.0, y: 0.0 },
-        scale: 1.0,
+        origin: kurbo::Point { x: 0.0, y: 0.0 },
+        cursor_position: kurbo::Point { x: 0.0, y: 0.0 },
         level: 0,
-        cursor_position: core::CursorPosition { x: 0.0, y: 0.0 },
     };
 
     #[allow(deprecated)]
@@ -94,7 +94,7 @@ fn init_runloop() {
                 WindowEvent::CloseRequested => event_loop.exit(),
 
                 WindowEvent::CursorMoved { position, .. } => {
-                    cx.cursor_position = core::CursorPosition {
+                    cx.cursor_position = kurbo::Point {
                         x: position.x,
                         y: position.y,
                     };
@@ -110,11 +110,9 @@ fn init_runloop() {
                     if event.state == ElementState::Pressed {
                         match event.logical_key.as_ref() {
                             Key::Named(NamedKey::ArrowUp) => {
-                                cx.scale += 1.0;
                                 render_state.window.request_redraw();
                             }
                             Key::Named(NamedKey::ArrowDown) => {
-                                cx.scale -= 1.0;
                                 render_state.window.request_redraw();
                             }
                             _ => {}
@@ -128,6 +126,7 @@ fn init_runloop() {
 
                 WindowEvent::RedrawRequested => {
                     scene.reset();
+                    view_tree.layout(cx);
                     view_tree.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
                 }
@@ -145,6 +144,12 @@ pub struct ViewTree {
     view_base: core::Base,
     state: Rc<RefCell<i32>>,
     tree: VStack,
+}
+
+impl Layout for ViewTree {
+    fn layout(&self, cx: Context) {
+        self.tree.layout(cx);
+    }
 }
 
 impl Draw for ViewTree {
@@ -191,7 +196,7 @@ impl ViewTree {
                         .diameter(50.0)
                         .fill(Color::rgb8(122, 122, 255))
                         .padding_top(25.0)
-                        .padding_left(25.0),
+                        .padding_left(25.0)
                 ))
             ))
             .spacing(40.0),

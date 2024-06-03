@@ -89,54 +89,67 @@ impl Stack for VStack {
     }
 }
 
-impl core::Draw for VStack {
-    fn draw(&self, mut cx: core::Context, scene: &mut vello::Scene) {
-        cx.level += 1;
+impl core::Layout for VStack {
+    fn layout(&self, mut cx: core::Context) {
         let mut width = 0.0;
         let mut height = 0.0;
-        let mut element_count = 0.0;
+        let mut count = 0.0;
 
         let process = |element: &Box<dyn AnyView>| {
-            element.draw(
-                core::Context {
-                    // Apply the origin offset of the VStack itself.
-                    origin: core::Origin {
-                        x: cx.origin.x + self.padding_left(),
-                        y: cx.origin.y + self.padding_top(),
-                    },
-                    ..cx
+            element.layout(core::Context {
+                // Apply the origin offset of the VStack itself.
+                origin: kurbo::Point {
+                    x: cx.origin.x + self.padding_left(),
+                    y: cx.origin.y + self.padding_top(),
                 },
-                scene,
-            );
+                ..cx
+            });
 
             // Offset origin.y for the next element in the VStack.
-            cx.origin.y +=
-                element.height() + element.padding_vertical() + self.spacing * core::ui_scale();
+            let spacing = self.spacing * core::ui_scale();
+            cx.origin.y += element.height() + element.padding_vertical() + spacing;
             height += element.height() + element.padding_vertical();
             width = f64::max(width, element.width() + element.padding_horizontal());
-            element_count += 1.0;
+            count += 1.0;
         };
 
         self.recurse_stack(process);
 
         if self.width() == 0.0 {
-            self.view_base.size.set(core::Size {
-                width: (width + self.padding_horizontal()) / core::ui_scale(),
+            self.view_base.size.set(vello::kurbo::Size {
+                width: width / core::ui_scale(),
                 height: self.view_base.size.get().height,
             });
         }
 
         if self.height() == 0.0 {
-            self.view_base.size.set(core::Size {
+            let spacing = f64::max(count - 1.0, 0.0) * self.spacing * core::ui_scale();
+            self.view_base.size.set(vello::kurbo::Size {
                 width: self.view_base.size.get().width,
-                height: (height
-                    + self.padding_vertical()
-                    + f64::max(element_count - 1.0, 0.0) * self.spacing * core::ui_scale())
-                    / core::ui_scale(),
+                height: (height + spacing) / core::ui_scale(),
             });
         }
+    }
+}
 
-        println!("L{} VStack {}", cx.level, self.size());
+impl core::Draw for VStack {
+    fn draw(&self, cx: core::Context, scene: &mut vello::Scene) {
+        println!(
+            "L{} VStack size: {} origin: {}",
+            cx.level,
+            self.size(),
+            self.origin()
+        );
+
+        self.recurse_stack(|element: &Box<dyn AnyView>| {
+            element.draw(
+                core::Context {
+                    level: cx.level + 1,
+                    ..cx
+                },
+                scene,
+            );
+        });
     }
 }
 
@@ -168,54 +181,67 @@ impl Stack for HStack {
     }
 }
 
-impl core::Draw for HStack {
-    fn draw(&self, mut cx: core::Context, scene: &mut vello::Scene) {
-        cx.level += 1;
+impl core::Layout for HStack {
+    fn layout(&self, mut cx: core::Context) {
         let mut width = 0.0;
         let mut height = 0.0;
-        let mut element_count = 0.0;
+        let mut count = 0.0;
 
         let process = |element: &Box<dyn AnyView>| {
-            element.draw(
-                core::Context {
-                    // Apply the origin offset of the HStack itself.
-                    origin: core::Origin {
-                        x: cx.origin.x + self.padding_left(),
-                        y: cx.origin.y + self.padding_top(),
-                    },
-                    ..cx
+            element.layout(core::Context {
+                // Apply the origin offset of the HStack itself.
+                origin: kurbo::Point {
+                    x: cx.origin.x + self.padding_left(),
+                    y: cx.origin.y + self.padding_top(),
                 },
-                scene,
-            );
+                ..cx
+            });
 
             // Offset origin.x for the next element in the HStack.
-            cx.origin.x +=
-                element.width() + element.padding_horizontal() + self.spacing * core::ui_scale();
+            let spacing = self.spacing * core::ui_scale();
+            cx.origin.x += element.width() + element.padding_horizontal() + spacing;
             width += element.width() + element.padding_horizontal();
             height = f64::max(height, element.height() + element.padding_vertical());
-            element_count += 1.0;
+            count += 1.0;
         };
 
         self.recurse_stack(process);
 
         if self.width() == 0.0 {
-            self.view_base.size.set(core::Size {
-                width: (width
-                    + self.padding_horizontal()
-                    + f64::max(element_count - 1.0, 0.0) * self.spacing * core::ui_scale())
-                    / core::ui_scale(),
+            let spacing = f64::max(count - 1.0, 0.0) * self.spacing * core::ui_scale();
+            self.view_base.size.set(vello::kurbo::Size {
+                width: (width + spacing) / core::ui_scale(),
                 height: self.view_base.size.get().height,
             });
         }
 
         if self.height() == 0.0 {
-            self.view_base.size.set(core::Size {
+            self.view_base.size.set(vello::kurbo::Size {
                 width: self.view_base.size.get().width,
-                height: (height + self.padding_vertical()) / core::ui_scale(),
+                height: height / core::ui_scale(),
             });
         }
+    }
+}
 
-        println!("L{} HStack {}", cx.level, self.size());
+impl core::Draw for HStack {
+    fn draw(&self, cx: core::Context, scene: &mut vello::Scene) {
+        println!(
+            "L{} HStack size: {} origin: {}",
+            cx.level,
+            self.size(),
+            self.origin()
+        );
+
+        self.recurse_stack(|element: &Box<dyn AnyView>| {
+            element.draw(
+                core::Context {
+                    level: cx.level + 1,
+                    ..cx
+                },
+                scene,
+            );
+        });
     }
 }
 
@@ -240,24 +266,20 @@ impl Stack for ZStack {
     }
 }
 
-impl core::Draw for ZStack {
-    fn draw(&self, mut cx: core::Context, scene: &mut vello::Scene) {
-        cx.level += 1;
+impl core::Layout for ZStack {
+    fn layout(&self, cx: Context) {
         let mut width = 0.0;
         let mut height = 0.0;
 
         let process = |element: &Box<dyn AnyView>| {
-            element.draw(
-                core::Context {
-                    // Apply the origin offset of the ZStack itself.
-                    origin: core::Origin {
-                        x: cx.origin.x + self.padding_left(),
-                        y: cx.origin.y + self.padding_top(),
-                    },
-                    ..cx
+            element.layout(core::Context {
+                // Apply the origin offset of the ZStack itself.
+                origin: kurbo::Point {
+                    x: cx.origin.x + self.padding_left(),
+                    y: cx.origin.y + self.padding_top(),
                 },
-                scene,
-            );
+                ..cx
+            });
 
             width = f64::max(width, element.width() + element.padding_horizontal());
             height = f64::max(height, element.height() + element.padding_vertical());
@@ -266,20 +288,39 @@ impl core::Draw for ZStack {
         self.recurse_stack(process);
 
         if self.width() == 0.0 {
-            self.view_base.size.set(core::Size {
-                width: (width + self.padding_horizontal()) / core::ui_scale(),
+            self.view_base.size.set(vello::kurbo::Size {
+                width: width / core::ui_scale(),
                 height: self.view_base.size.get().width,
             });
         }
 
         if self.height() == 0.0 {
-            self.view_base.size.set(core::Size {
+            self.view_base.size.set(vello::kurbo::Size {
                 width: self.view_base.size.get().width,
-                height: (height + self.padding_vertical()) / core::ui_scale(),
+                height: height / core::ui_scale(),
             });
         }
+    }
+}
 
-        println!("L{} ZStack {}", cx.level, self.size());
+impl core::Draw for ZStack {
+    fn draw(&self, cx: core::Context, scene: &mut vello::Scene) {
+        println!(
+            "L{} ZStack size: {} origin: {}",
+            cx.level,
+            self.size(),
+            self.origin()
+        );
+
+        self.recurse_stack(|element: &Box<dyn AnyView>| {
+            element.draw(
+                core::Context {
+                    level: cx.level + 1,
+                    ..cx
+                },
+                scene,
+            );
+        });
     }
 }
 
@@ -315,14 +356,9 @@ impl Rectangle {
 
 impl core::Draw for Rectangle {
     fn draw(&self, cx: core::Context, scene: &mut vello::Scene) {
-        println!("L{} Rectangle {} {}", cx.level, self.size(), cx.origin);
+        println!("L{} Rectangle {} {}", cx.level, self.size(), self.origin());
 
-        let rect = kurbo::Rect::new(
-            cx.origin.x + self.padding_left(),
-            cx.origin.y + self.padding_top(),
-            cx.origin.x + self.padding_left() + self.width(),
-            cx.origin.y + self.padding_top() + self.height(),
-        );
+        let rect = self.rect();
 
         let _is_hovered = (rect.x0..=rect.x1).contains(&cx.cursor_position.x)
             && (rect.y0..=rect.y1).contains(&cx.cursor_position.y);
@@ -378,13 +414,16 @@ impl Circle {
 
 impl core::Draw for Circle {
     fn draw(&self, cx: core::Context, scene: &mut vello::Scene) {
-        println!("L{} Circle {} {}", cx.level, self.size(), cx.origin);
+        println!(
+            "L{} Circle size: {} origin: {}",
+            cx.level,
+            self.size(),
+            self.origin()
+        );
 
+        let rect = self.rect();
         let circle = vello::kurbo::Circle::new(
-            (
-                cx.origin.x + self.padding_left() + self.width() / 2.0,
-                cx.origin.y + self.padding_top() + self.height() / 2.0,
-            ),
+            (rect.x0 + self.width() / 2.0, rect.y0 + self.height() / 2.0),
             self.width() / 2.0,
         );
 

@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use std::sync::atomic::{AtomicU64, Ordering};
+use vello::kurbo;
 
 lazy_static! {
     static ref GLOBAL_UI_SCALE: AtomicU64 = AtomicU64::new(1.0f64.to_bits());
@@ -15,13 +16,12 @@ pub fn ui_scale() -> f64 {
 
 #[derive(Copy, Clone, Default)]
 pub struct Context {
-    pub origin: Origin,
-    pub scale: f64,
+    pub origin: kurbo::Point,
+    pub cursor_position: kurbo::Point,
     pub level: i32,
-    pub cursor_position: CursorPosition,
 }
 
-pub trait AnyView: Draw + ViewBase + std::any::Any {
+pub trait AnyView: Draw + Layout + ViewBase + std::any::Any {
     fn as_any(&self) -> &dyn std::any::Any;
 }
 
@@ -29,8 +29,14 @@ pub trait Draw {
     fn draw(&self, cx: Context, scene: &mut vello::Scene);
 }
 
+pub trait Layout {
+    fn layout(&self, cx: Context);
+}
+
 pub trait ViewBase {
-    fn size(&self) -> Size;
+    fn rect(&self) -> kurbo::Rect;
+    fn origin(&self) -> kurbo::Point;
+    fn size(&self) -> kurbo::Size;
     fn width(&self) -> f64;
     fn height(&self) -> f64;
     fn visible(&self) -> bool;
@@ -45,26 +51,9 @@ pub trait ViewBase {
     fn on_click(&self) -> &Option<Box<dyn Fn()>>;
 }
 
-#[derive(Debug, Copy, Clone, Default)]
-pub struct Origin {
-    pub x: f64,
-    pub y: f64,
-}
-
-#[derive(Debug, Copy, Clone, Default)]
-pub struct CursorPosition {
-    pub x: f64,
-    pub y: f64,
-}
-
-#[derive(Copy, Clone, Default)]
-pub struct Size {
-    pub width: f64,
-    pub height: f64,
-}
-
 pub struct Base {
-    pub size: std::cell::Cell<Size>,
+    pub size: std::cell::Cell<kurbo::Size>,
+    pub origin: std::cell::Cell<kurbo::Point>,
     pub visible: bool,
 
     pub padding_top: f64,
@@ -78,7 +67,8 @@ pub struct Base {
 impl Default for Base {
     fn default() -> Self {
         Self {
-            size: std::cell::Cell::new(Size::default()),
+            size: std::cell::Cell::new(kurbo::Size::default()),
+            origin: std::cell::Cell::new(kurbo::Point::default()),
             visible: true,
 
             padding_top: 0.0,
@@ -88,18 +78,6 @@ impl Default for Base {
 
             on_click: None,
         }
-    }
-}
-
-impl std::fmt::Display for Origin {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{ x: {}, y: {} }}", self.x, self.y)
-    }
-}
-
-impl std::fmt::Display for Size {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{{ width: {}, height: {} }}", self.width, self.height)
     }
 }
 
