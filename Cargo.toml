@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-macros = { path = "macros" }
 anyhow = "1.0.86"
+lazy_static = "1.4.0"
+macros = { path = "macros" }
 pollster = "0.3.0"
 vello = "0.1.0"
 wgpu = "0.19.4"

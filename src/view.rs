@@ -42,6 +42,8 @@ impl core::Draw for Loop {
 pub trait Stack: ViewBase {
     fn elements(&self) -> &[Box<dyn core::AnyView>];
 
+    // Given that the root view is a container and always drawn,
+    // only view containers need to check for element visibility.
     fn recurse_stack(&self, mut operation: impl FnMut(&Box<dyn AnyView>)) {
         fn r(element: &Box<dyn AnyView>, operation: &mut impl FnMut(&Box<dyn AnyView>)) {
             if let Some(list) = element.as_any().downcast_ref::<Loop>() {
@@ -108,7 +110,8 @@ impl core::Draw for VStack {
             );
 
             // Offset origin.y for the next element in the VStack.
-            cx.origin.y += element.height() + element.padding_vertical() + self.spacing;
+            cx.origin.y +=
+                element.height() + element.padding_vertical() + self.spacing * core::ui_scale();
             height += element.height() + element.padding_vertical();
             width = f64::max(width, element.width() + element.padding_horizontal());
             element_count += 1.0;
@@ -118,15 +121,18 @@ impl core::Draw for VStack {
 
         if self.width() == 0.0 {
             self.view_base.size.set(core::Size {
-                width: width + self.padding_horizontal(),
-                height: self.height(),
+                width: (width + self.padding_horizontal()) / core::ui_scale(),
+                height: self.view_base.size.get().height,
             });
         }
 
         if self.height() == 0.0 {
             self.view_base.size.set(core::Size {
-                width: self.width(),
-                height: height + self.padding_vertical() + ((element_count - 1.0) * self.spacing),
+                width: self.view_base.size.get().width,
+                height: (height
+                    + self.padding_vertical()
+                    + f64::max(element_count - 1.0, 0.0) * self.spacing * core::ui_scale())
+                    / core::ui_scale(),
             });
         }
 
@@ -169,8 +175,6 @@ impl core::Draw for HStack {
         let mut height = 0.0;
         let mut element_count = 0.0;
 
-        // Given that the root view is a container and always drawn,
-        // only view containers need to check for element visibility.
         let process = |element: &Box<dyn AnyView>| {
             element.draw(
                 core::Context {
@@ -185,7 +189,8 @@ impl core::Draw for HStack {
             );
 
             // Offset origin.x for the next element in the HStack.
-            cx.origin.x += element.width() + element.padding_horizontal() + self.spacing;
+            cx.origin.x +=
+                element.width() + element.padding_horizontal() + self.spacing * core::ui_scale();
             width += element.width() + element.padding_horizontal();
             height = f64::max(height, element.height() + element.padding_vertical());
             element_count += 1.0;
@@ -195,15 +200,18 @@ impl core::Draw for HStack {
 
         if self.width() == 0.0 {
             self.view_base.size.set(core::Size {
-                width: width + self.padding_horizontal() + ((element_count - 1.0) * self.spacing),
-                height: self.height(),
+                width: (width
+                    + self.padding_horizontal()
+                    + f64::max(element_count - 1.0, 0.0) * self.spacing * core::ui_scale())
+                    / core::ui_scale(),
+                height: self.view_base.size.get().height,
             });
         }
 
         if self.height() == 0.0 {
             self.view_base.size.set(core::Size {
-                width: self.width(),
-                height: height + self.padding_vertical(),
+                width: self.view_base.size.get().width,
+                height: (height + self.padding_vertical()) / core::ui_scale(),
             });
         }
 
@@ -259,15 +267,15 @@ impl core::Draw for ZStack {
 
         if self.width() == 0.0 {
             self.view_base.size.set(core::Size {
-                width: width + self.padding_horizontal(),
-                height: self.height(),
+                width: (width + self.padding_horizontal()) / core::ui_scale(),
+                height: self.view_base.size.get().width,
             });
         }
 
         if self.height() == 0.0 {
             self.view_base.size.set(core::Size {
-                width: self.width(),
-                height: height + self.padding_vertical(),
+                width: self.view_base.size.get().width,
+                height: (height + self.padding_vertical()) / core::ui_scale(),
             });
         }
 

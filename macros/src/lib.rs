@@ -59,17 +59,17 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
         impl ViewBase for #name {
             fn size(&self) -> core::Size {
                 core::Size {
-                    width: self.view_base.size.get().width,
-                    height: self.view_base.size.get().height
+                    width: self.view_base.size.get().width * ui_scale(),
+                    height: self.view_base.size.get().height * ui_scale()
                 }
             }
 
             fn width(&self) -> f64 {
-                self.view_base.size.get().width
+                self.view_base.size.get().width * ui_scale()
             }
 
             fn height(&self) -> f64 {
-                self.view_base.size.get().height
+                self.view_base.size.get().height * ui_scale()
             }
 
             fn visible(&self) -> bool {
@@ -77,29 +77,29 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
             }
 
             fn padding_top(&self) -> f64 {
-                self.view_base.padding_top
+                self.view_base.padding_top * ui_scale()
             }
 
             fn padding_bottom(&self) -> f64 {
-                self.view_base.padding_bottom
+                self.view_base.padding_bottom * ui_scale()
             }
 
             fn padding_left(&self) -> f64 {
-                self.view_base.padding_left
+                self.view_base.padding_left * ui_scale()
             }
 
             fn padding_right(&self) -> f64 {
-                self.view_base.padding_right
+                self.view_base.padding_right * ui_scale()
             }
 
             fn padding_horizontal(&self) -> f64 {
-                self.view_base.padding_left
-                + self.view_base.padding_right
+                self.view_base.padding_left * ui_scale()
+                + self.view_base.padding_right * ui_scale()
             }
 
             fn padding_vertical(&self) -> f64 {
-                self.view_base.padding_top
-                + self.view_base.padding_bottom
+                self.view_base.padding_top * ui_scale()
+                + self.view_base.padding_bottom * ui_scale()
             }
 
             fn on_click(&self) -> &Option<Box<dyn Fn()>> {

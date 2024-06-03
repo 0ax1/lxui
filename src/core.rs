@@ -1,3 +1,18 @@
+use lazy_static::lazy_static;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+lazy_static! {
+    static ref GLOBAL_UI_SCALE: AtomicU64 = AtomicU64::new(1.0f64.to_bits());
+}
+
+pub fn set_ui_scale(value: f64) {
+    GLOBAL_UI_SCALE.store(value.to_bits(), Ordering::Relaxed);
+}
+
+pub fn ui_scale() -> f64 {
+    f64::from_bits(GLOBAL_UI_SCALE.load(Ordering::Relaxed))
+}
+
 #[derive(Copy, Clone, Default)]
 pub struct Context {
     pub origin: Origin,
