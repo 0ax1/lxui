@@ -45,8 +45,7 @@ fn init_runloop() {
     let view_tree = ViewTree::new();
 
     let mut cx = core::Context {
-        origin: kurbo::Point { x: 0.0, y: 0.0 },
-        cursor_position: kurbo::Point { x: 0.0, y: 0.0 },
+        location: kurbo::Point { x: 0.0, y: 0.0 },
         level: 0,
     };
 
@@ -94,7 +93,7 @@ fn init_runloop() {
                 WindowEvent::CloseRequested => event_loop.exit(),
 
                 WindowEvent::CursorMoved { position, .. } => {
-                    cx.cursor_position = kurbo::Point {
+                    cx.location = kurbo::Point {
                         x: position.x,
                         y: position.y,
                     };
@@ -102,7 +101,7 @@ fn init_runloop() {
 
                 WindowEvent::MouseInput { state, button, .. } => {
                     if button == MouseButton::Left && state == ElementState::Pressed {
-                        println!("click");
+                        view_tree.root.mouse_down(cx);
                     }
                 }
 
@@ -126,8 +125,9 @@ fn init_runloop() {
 
                 WindowEvent::RedrawRequested => {
                     scene.reset();
-                    view_tree.layout(cx);
-                    view_tree.draw(cx, &mut scene);
+                    cx.location = kurbo::Point::default();
+                    view_tree.root.layout(cx);
+                    view_tree.root.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
                 }
                 _ => {}
@@ -139,23 +139,10 @@ fn init_runloop() {
     println!("{:?}", result);
 }
 
-#[derive(AnyView)]
 pub struct ViewTree {
     view_base: core::Base,
     state: Rc<RefCell<i32>>,
-    tree: VStack,
-}
-
-impl Layout for ViewTree {
-    fn layout(&self, cx: Context) {
-        self.tree.layout(cx);
-    }
-}
-
-impl Draw for ViewTree {
-    fn draw(&self, cx: Context, scene: &mut vello::Scene) {
-        self.tree.draw(cx, scene);
-    }
+    root: VStack,
 }
 
 impl ViewTree {
@@ -165,7 +152,7 @@ impl ViewTree {
         ViewTree {
             view_base: core::Base::default(),
             state: state.clone(),
-            tree: ViewTree::build(state),
+            root: ViewTree::build(state),
         }
     }
 
@@ -178,13 +165,20 @@ impl ViewTree {
                     .stroke(Color::rgb8(122, 122, 255), 2.0)
                     .on_click(event::callback(&state, {
                         |state| {
+                            *state += 1;
                             println!("clicked {}", state);
                         }
                     })),
 
                 Circle::default()
                     .stroke(Color::rgb8(255, 255, 255), 4.0)
-                    .diameter(100.0),
+                    .diameter(100.0)
+                    .on_click(event::callback(&state, {
+                        |state| {
+                            *state += 1;
+                            println!("clicked {}", state);
+                        }
+                    })),
 
                 ZStack::new((
                     Rectangle::default()
@@ -197,6 +191,12 @@ impl ViewTree {
                         .fill(Color::rgb8(122, 122, 255))
                         .padding_top(25.0)
                         .padding_left(25.0)
+                        .on_click(event::callback(&state, {
+                            |state| {
+                                *state += 1;
+                                println!("clicked {}", state);
+                            }
+                        })),
                 ))
             ))
             .spacing(40.0),
@@ -210,8 +210,7 @@ impl ViewTree {
                                 .fill(Color::rgb8(25 * idx2 as u8, 25 * idx2 as u8, 25 * idx2 as u8))
                                 .diameter(10.0 * (idx + 1) as f64 / 2.0)
                                 .visible(idx % 2 == 0)
-                            )
-                    ))
+                    )))
                     .spacing(20.0)
                 )
             ))

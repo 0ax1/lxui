@@ -95,19 +95,24 @@ impl core::Layout for VStack {
         let mut height = 0.0;
         let mut count = 0.0;
 
+        self.view_base.origin.set(vello::kurbo::Point {
+            x: cx.location.x + self.padding_left(),
+            y: cx.location.y + self.padding_top(),
+        });
+
         let process = |element: &Box<dyn AnyView>| {
             element.layout(core::Context {
                 // Apply the origin offset of the VStack itself.
-                origin: kurbo::Point {
-                    x: cx.origin.x + self.padding_left(),
-                    y: cx.origin.y + self.padding_top(),
+                location: kurbo::Point {
+                    x: cx.location.x + self.padding_left(),
+                    y: cx.location.y + self.padding_top(),
                 },
                 ..cx
             });
 
             // Offset origin.y for the next element in the VStack.
             let spacing = self.spacing * core::ui_scale();
-            cx.origin.y += element.height() + element.padding_vertical() + spacing;
+            cx.location.y += element.height() + element.padding_vertical() + spacing;
             height += element.height() + element.padding_vertical();
             width = f64::max(width, element.width() + element.padding_horizontal());
             count += 1.0;
@@ -187,19 +192,24 @@ impl core::Layout for HStack {
         let mut height = 0.0;
         let mut count = 0.0;
 
+        self.view_base.origin.set(vello::kurbo::Point {
+            x: cx.location.x + self.padding_left(),
+            y: cx.location.y + self.padding_top(),
+        });
+
         let process = |element: &Box<dyn AnyView>| {
             element.layout(core::Context {
                 // Apply the origin offset of the HStack itself.
-                origin: kurbo::Point {
-                    x: cx.origin.x + self.padding_left(),
-                    y: cx.origin.y + self.padding_top(),
+                location: kurbo::Point {
+                    x: cx.location.x + self.padding_left(),
+                    y: cx.location.y + self.padding_top(),
                 },
                 ..cx
             });
 
             // Offset origin.x for the next element in the HStack.
             let spacing = self.spacing * core::ui_scale();
-            cx.origin.x += element.width() + element.padding_horizontal() + spacing;
+            cx.location.x += element.width() + element.padding_horizontal() + spacing;
             width += element.width() + element.padding_horizontal();
             height = f64::max(height, element.height() + element.padding_vertical());
             count += 1.0;
@@ -271,12 +281,17 @@ impl core::Layout for ZStack {
         let mut width = 0.0;
         let mut height = 0.0;
 
+        self.view_base.origin.set(vello::kurbo::Point {
+            x: cx.location.x + self.padding_left(),
+            y: cx.location.y + self.padding_top(),
+        });
+
         let process = |element: &Box<dyn AnyView>| {
             element.layout(core::Context {
                 // Apply the origin offset of the ZStack itself.
-                origin: kurbo::Point {
-                    x: cx.origin.x + self.padding_left(),
-                    y: cx.origin.y + self.padding_top(),
+                location: kurbo::Point {
+                    x: cx.location.x + self.padding_left(),
+                    y: cx.location.y + self.padding_top(),
                 },
                 ..cx
             });
@@ -359,9 +374,6 @@ impl core::Draw for Rectangle {
         println!("L{} Rectangle {} {}", cx.level, self.size(), self.origin());
 
         let rect = self.rect();
-
-        let _is_hovered = (rect.x0..=rect.x1).contains(&cx.cursor_position.x)
-            && (rect.y0..=rect.y1).contains(&cx.cursor_position.y);
 
         if let Some(color) = self.fill {
             scene.fill(

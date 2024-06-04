@@ -126,19 +126,51 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
                 self
             }
         }
-
     };
 
-    if !["ViewTree", "VStack", "HStack", "ZStack"].contains(&name.to_string().as_str()) {
+    if ["VStack", "HStack", "ZStack"].contains(&name.to_string().as_str()) {
+        let expanded2 = quote! {
+            impl core::UserEvent for #name {
+                fn mouse_down(&self, cx: core::Context) {
+                    let rect = self.rect();
+                    if (rect.x0..=rect.x1).contains(&cx.location.x) &&
+                       (rect.y0..=rect.y1).contains(&cx.location.y) {
+
+                       self.recurse_stack(|element: &Box<dyn AnyView>| {
+                           element.mouse_down(cx);
+                       });
+
+                       if let Some(action) = self.on_click() {
+                           action();
+                       }
+                    }
+                }
+            }
+        };
+
+        expanded.extend(expanded2);
+    } else {
         let expanded2 = quote! {
             impl core::Layout for #name {
                 fn layout(&self, cx: Context) {
                     self.view_base.origin.set(
                         vello::kurbo::Point {
-                            x: cx.origin.x + self.padding_left(),
-                            y: cx.origin.y + self.padding_top(),
+                            x: cx.location.x + self.padding_left(),
+                            y: cx.location.y + self.padding_top(),
                         }
                     )
+                }
+            }
+
+            impl core::UserEvent for #name {
+                fn mouse_down(&self, cx: core::Context) {
+                    if let Some(action) = self.on_click() {
+                        let rect = self.rect();
+                        if (rect.x0..=rect.x1).contains(&cx.location.x) &&
+                           (rect.y0..=rect.y1).contains(&cx.location.y) {
+                            action();
+                        }
+                    }
                 }
             }
         };

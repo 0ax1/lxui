@@ -16,12 +16,11 @@ pub fn ui_scale() -> f64 {
 
 #[derive(Copy, Clone, Default)]
 pub struct Context {
-    pub origin: kurbo::Point,
-    pub cursor_position: kurbo::Point,
+    pub location: kurbo::Point,
     pub level: i32,
 }
 
-pub trait AnyView: Draw + Layout + ViewBase + std::any::Any {
+pub trait AnyView: Draw + Layout + UserEvent + ViewBase + std::any::Any {
     fn as_any(&self) -> &dyn std::any::Any;
 }
 
@@ -31,6 +30,10 @@ pub trait Draw {
 
 pub trait Layout {
     fn layout(&self, cx: Context);
+}
+
+pub trait UserEvent {
+    fn mouse_down(&self, cx: Context);
 }
 
 pub trait ViewBase {
