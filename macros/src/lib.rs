@@ -13,6 +13,22 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
                 self
             }
 
+            pub fn width(mut self, width: f64) -> Self {
+                self.view_base.size.set(vello::kurbo::Size {
+                    width,
+                    height: self.view_base.size.get().height,
+                });
+                self
+            }
+
+            pub fn height(mut self, height: f64) -> Self {
+                self.view_base.size.set(vello::kurbo::Size {
+                    width: self.view_base.size.get().width,
+                    height
+                });
+                self
+            }
+
             pub fn visible(mut self, visible: bool) -> Self {
                 self.view_base.visible = visible;
                 self
