@@ -128,10 +128,9 @@ impl core::Layout for VStack {
         }
 
         if self.height() == 0.0 {
-            let spacing = f64::max(count - 1.0, 0.0) * self.spacing * core::ui_scale();
             self.view_base.size.set(vello::kurbo::Size {
                 width: self.view_base.size.get().width,
-                height: (height + spacing) / core::ui_scale(),
+                height: height / core::ui_scale() + f64::max(count - 1.0, 0.0) * self.spacing,
             });
         }
     }
@@ -218,9 +217,8 @@ impl core::Layout for HStack {
         self.recurse_stack(process);
 
         if self.width() == 0.0 {
-            let spacing = f64::max(count - 1.0, 0.0) * self.spacing * core::ui_scale();
             self.view_base.size.set(vello::kurbo::Size {
-                width: (width + spacing) / core::ui_scale(),
+                width: width / core::ui_scale() + f64::max(count - 1.0, 0.0) * self.spacing,
                 height: self.view_base.size.get().height,
             });
         }
