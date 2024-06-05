@@ -28,7 +28,7 @@ impl<T> State<T> {
         }
     }
 
-    pub fn val(&self) -> T
+    pub fn value(&self) -> T
     where
         T: Copy,
     {

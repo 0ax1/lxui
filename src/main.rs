@@ -11,6 +11,8 @@ use view::*;
 mod rendering;
 use rendering::*;
 
+mod state;
+
 use winit::dpi::LogicalSize;
 use winit::event::*;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -39,7 +41,9 @@ fn init_runloop() {
     let mut render_state = RenderState::Suspended(None);
     let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
-    let mut view_tree = ViewTree::new();
+
+    let mut state_tree = ViewTree::new();
+    let mut view_tree = state_tree.f.as_mut()();
 
     let mut cx = core::Context {
         location: kurbo::Point { x: 0.0, y: 0.0 },
@@ -98,7 +102,7 @@ fn init_runloop() {
 
                 WindowEvent::MouseInput { state, button, .. } => {
                     if button == MouseButton::Left && state == ElementState::Pressed {
-                        view_tree.root.mouse_down(cx);
+                        view_tree.mouse_down(cx);
                         render_state.window.request_redraw();
                     }
                 }
@@ -124,9 +128,10 @@ fn init_runloop() {
                 WindowEvent::RedrawRequested => {
                     scene.reset();
                     cx.location = kurbo::Point::default();
-                    view_tree.root = view_tree.rebuild();
-                    view_tree.root.layout(cx);
-                    view_tree.root.draw(cx, &mut scene);
+
+                    view_tree = state_tree.rebuild();
+                    view_tree.layout(cx);
+                    view_tree.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
                 }
                 _ => {}
@@ -139,38 +144,32 @@ fn init_runloop() {
 }
 
 pub struct ViewTree {
-    view_base: core::Base,
-    state: State<i32>,
-    root: VStack,
+    pub f: Box<dyn FnMut() -> VStack + 'static>,
 }
 
 impl ViewTree {
     pub fn new() -> Self {
-        let state = State::new(0);
+        let state = State::new(0.0);
 
         ViewTree {
-            view_base: core::Base::default(),
-            state: state.clone(),
-            root: ViewTree::build(state),
+            f: Box::new(move || Self::body(state.clone())),
         }
     }
 
-    pub fn rebuild(&self) -> VStack {
-        let root = ViewTree::build(self.state.clone());
-        // TODO: call rebuild on children
-        root
+    pub fn rebuild(&mut self) -> VStack {
+        self.f.as_mut()()
     }
 
     #[rustfmt::skip]
-    fn build(state: State<i32>) -> VStack {
+    fn body(state: State<f64>) -> VStack {
         VStack::new((
             HStack::new((
                 Rectangle::default()
                     .size(100.0, 100.0)
-                    .stroke(Color::rgb8(122, 122, 122), 2.0 * state.val() as f64)
+                    .stroke(Color::rgb8(122, 122, 122), 2.0 * state.value())
                     .on_click(core::callback(&state, {
                         |state| {
-                            *state += 1;
+                            *state += 1.0;
                             println!("clicked {}", state);
                         }
                     })),
@@ -180,7 +179,7 @@ impl ViewTree {
                     .diameter(100.0)
                     .on_click(core::callback(&state, {
                         |state| {
-                            *state += 1;
+                            *state += 1.0;
                             println!("clicked {}", state);
                         }
                     })),
@@ -200,25 +199,30 @@ impl ViewTree {
                             |state| {
                                 println!("clicked {}", state);
                             }
-                        }))
-                ))
+                        })),
+                )),
             ))
             .spacing(40.0),
 
             HStack::new((
-                Loop::new(0..18, |idx|
+                Loop::new(0..18, |idx| {
                     VStack::new((
-                        Loop::new(0..10, |idx2|
+                        Loop::new(0..10, |idx2| {
                             Circle::default()
                                 .stroke(Color::rgba8(122, 122, 255, 50), 2.0)
-                                .fill(Color::rgb8(25 * idx2 as u8, 25 * idx2 as u8, 25 * idx2 as u8))
+                                .fill(Color::rgb8(
+                                    25 * idx2 as u8,
+                                    25 * idx2 as u8,
+                                    25 * idx2 as u8,
+                                ))
                                 .diameter(5.0 * (idx + 1) as f64 / 2.0)
-                    )))
+                        })),
+                    )
                     .visible(idx % 2 == 0)
                     .spacing(20.0)
-                )
-            ))
-            .spacing(20.0)
+                })),
+            )
+            .spacing(20.0),
         ))
         .spacing(100.0)
         .padding_top(40.0)
@@ -227,5 +231,6 @@ impl ViewTree {
 }
 
 fn main() {
+    state::showcase();
     init_runloop();
 }
