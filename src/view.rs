@@ -1,19 +1,6 @@
 use crate::{core, *};
 use vello::{kurbo, peniko};
 
-pub mod event {
-    pub fn callback<T>(
-        state: &std::rc::Rc<std::cell::RefCell<T>>,
-        f: impl Fn(&mut T),
-    ) -> impl Fn() {
-        let state = state.clone();
-
-        move || {
-            f(&mut state.borrow_mut());
-        }
-    }
-}
-
 #[derive(AnyView)]
 pub struct Loop {
     view_base: core::Base,

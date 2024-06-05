@@ -1,6 +1,69 @@
-use lazy_static::lazy_static;
+use std::cell::RefCell;
+use std::ops::{Deref, DerefMut};
+use std::rc::Rc;
 use std::sync::atomic::{AtomicU64, Ordering};
+
+use lazy_static::lazy_static;
 use vello::kurbo;
+
+pub fn callback<T>(state: &Signal<T>, f: impl Fn(&mut T)) -> impl Fn() {
+    let state = state.clone();
+
+    move || {
+        f(&mut state.borrow_mut());
+        state.notify();
+    }
+}
+
+pub struct Signal<T> {
+    data: Rc<RefCell<T>>,
+    subscribers: Rc<RefCell<std::vec::Vec<Box<dyn FnMut(&mut T)>>>>,
+}
+
+impl<T> Signal<T> {
+    pub fn new(value: T) -> Self {
+        Signal {
+            data: Rc::new(RefCell::new(value)),
+            subscribers: Rc::new(RefCell::default()),
+        }
+    }
+
+    pub fn subscribe<F>(&self, closure: F)
+    where
+        F: FnMut(&mut T) + 'static,
+    {
+        self.subscribers.borrow_mut().push(Box::new(closure));
+    }
+
+    pub fn notify(&self) {
+        for subscriber in self.subscribers.borrow_mut().iter_mut() {
+            subscriber(&mut self.data.borrow_mut());
+        }
+    }
+}
+
+impl<T> std::clone::Clone for Signal<T> {
+    fn clone(&self) -> Self {
+        Signal {
+            data: self.data.clone(),
+            subscribers: self.subscribers.clone(),
+        }
+    }
+}
+
+impl<T> Deref for Signal<T> {
+    type Target = RefCell<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<T> DerefMut for Signal<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Rc::get_mut(&mut self.data).expect("error: multiple references")
+    }
+}
 
 lazy_static! {
     static ref GLOBAL_UI_SCALE: AtomicU64 = AtomicU64::new(1.0f64.to_bits());

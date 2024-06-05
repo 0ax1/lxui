@@ -11,9 +11,6 @@ use view::*;
 mod rendering;
 use rendering::*;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use winit::dpi::LogicalSize;
 use winit::event::*;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
@@ -141,13 +138,16 @@ fn init_runloop() {
 
 pub struct ViewTree {
     view_base: core::Base,
-    state: Rc<RefCell<i32>>,
+    state: Signal<i32>,
     root: VStack,
 }
 
 impl ViewTree {
     pub fn new() -> Self {
-        let state = Rc::new(RefCell::new(0));
+        let state = Signal::new(0);
+        state.subscribe(|value| {
+            println!("subscriber: {}", value);
+        });
 
         ViewTree {
             view_base: core::Base::default(),
@@ -157,13 +157,13 @@ impl ViewTree {
     }
 
     #[rustfmt::skip]
-    fn build(state: Rc<RefCell<i32>>) -> VStack {
+    fn build(state: Signal<i32>) -> VStack {
         VStack::new((
             HStack::new((
                 Rectangle::default()
                     .size(100.0, 100.0)
                     .stroke(Color::rgb8(122, 122, 255), 2.0)
-                    .on_click(event::callback(&state, {
+                    .on_click(core::callback(&state, {
                         |state| {
                             *state += 1;
                             println!("clicked {}", state);
@@ -173,7 +173,7 @@ impl ViewTree {
                 Circle::default()
                     .stroke(Color::rgb8(255, 255, 255), 4.0)
                     .diameter(100.0)
-                    .on_click(event::callback(&state, {
+                    .on_click(core::callback(&state, {
                         |state| {
                             *state += 1;
                             println!("clicked {}", state);
@@ -191,7 +191,7 @@ impl ViewTree {
                         .fill(Color::rgb8(122, 122, 255))
                         .padding_top(25.0)
                         .padding_left(25.0)
-                        .on_click(event::callback(&state, {
+                        .on_click(core::callback(&state, {
                             |state| {
                                 *state += 1;
                                 println!("clicked {}", state);
