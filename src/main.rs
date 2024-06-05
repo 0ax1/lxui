@@ -39,7 +39,7 @@ fn init_runloop() {
     let mut render_state = RenderState::Suspended(None);
     let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
-    let view_tree = ViewTree::new();
+    let mut view_tree = ViewTree::new();
 
     let mut cx = core::Context {
         location: kurbo::Point { x: 0.0, y: 0.0 },
@@ -99,6 +99,7 @@ fn init_runloop() {
                 WindowEvent::MouseInput { state, button, .. } => {
                     if button == MouseButton::Left && state == ElementState::Pressed {
                         view_tree.root.mouse_down(cx);
+                        render_state.window.request_redraw();
                     }
                 }
 
@@ -123,6 +124,7 @@ fn init_runloop() {
                 WindowEvent::RedrawRequested => {
                     scene.reset();
                     cx.location = kurbo::Point::default();
+                    view_tree.root = view_tree.rebuild();
                     view_tree.root.layout(cx);
                     view_tree.root.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
@@ -139,38 +141,33 @@ fn init_runloop() {
 pub struct ViewTree {
     view_base: core::Base,
     state: State<i32>,
-    state2: State<String>,
     root: VStack,
 }
 
 impl ViewTree {
     pub fn new() -> Self {
         let state = State::new(0);
-        state.subscribe(|value| {
-            println!("subscriber: {}", value);
-        });
-
-        let state2 = State::new("a".to_string());
-        state2.subscribe(|value| {
-            println!("subscriber: {}", value);
-            *value += "a";
-        });
 
         ViewTree {
             view_base: core::Base::default(),
             state: state.clone(),
-            state2: state2.clone(),
-            root: ViewTree::build(state, state2),
+            root: ViewTree::build(state),
         }
     }
 
+    pub fn rebuild(&self) -> VStack {
+        let root = ViewTree::build(self.state.clone());
+        // TODO: call rebuild on children
+        root
+    }
+
     #[rustfmt::skip]
-    fn build(state: State<i32>, state2: State<String>) -> VStack {
+    fn build(state: State<i32>) -> VStack {
         VStack::new((
             HStack::new((
                 Rectangle::default()
                     .size(100.0, 100.0)
-                    .stroke(Color::rgb8(122, 122, 255), 2.0)
+                    .stroke(Color::rgb8(122, 122, 122), 2.0 * state.val() as f64)
                     .on_click(core::callback(&state, {
                         |state| {
                             *state += 1;
@@ -199,7 +196,7 @@ impl ViewTree {
                         .fill(Color::rgb8(122, 122, 255))
                         .padding_top(25.0)
                         .padding_left(25.0)
-                        .on_click(core::callback(&state2, {
+                        .on_click(core::callback(&state, {
                             |state| {
                                 println!("clicked {}", state);
                             }

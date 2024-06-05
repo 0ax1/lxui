@@ -28,6 +28,13 @@ impl<T> State<T> {
         }
     }
 
+    pub fn val(&self) -> T
+    where
+        T: Copy,
+    {
+        *self.data.borrow()
+    }
+
     pub fn subscribe<F>(&self, closure: F)
     where
         F: FnMut(&mut T) + 'static,
