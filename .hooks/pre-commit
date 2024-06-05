@@ -27,10 +27,6 @@ function check_for_spaces_in_file_names() {
 function check_for_trailing_white_space() {
     for file in `git diff --name-only --diff-filter=AM --staged`; do
         if [[ ! -z `file $file | grep text` ]]; then
-            if [[ $file == mono.xcodeproj/* ]]; then
-                continue
-            fi
-
             gsed -i 's/[ \t]*$//' $file
             git add $file
         fi
@@ -42,20 +38,6 @@ function check_for_tabs() {
     for file in `git diff --name-only --diff-filter=AM --staged`; do
         if [[ $file == *.sh ]]; then
             gsed -i 's/\t/    /g' $file
-            git add $file
-        fi
-    done
-}
-
-# Replace #include with #import.
-function check_include_pragmas() {
-    for file in `git diff --name-only --diff-filter=AM --staged`; do
-        if [[ $file == Third/* ]]; then
-            continue
-        fi
-
-        if [[ $file == *.(c|cpp|mm|h|hpp) ]]; then
-            gsed -i 's/#include/#import/' $file
             git add $file
         fi
     done
@@ -80,6 +62,5 @@ check_for_formatting
 check_for_spaces_in_file_names
 check_for_trailing_white_space
 check_for_tabs
-check_include_pragmas
 
 exit $exit_code
