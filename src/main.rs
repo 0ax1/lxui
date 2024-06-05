@@ -138,26 +138,34 @@ fn init_runloop() {
 
 pub struct ViewTree {
     view_base: core::Base,
-    state: Signal<i32>,
+    state: State<i32>,
+    state2: State<String>,
     root: VStack,
 }
 
 impl ViewTree {
     pub fn new() -> Self {
-        let state = Signal::new(0);
+        let state = State::new(0);
         state.subscribe(|value| {
             println!("subscriber: {}", value);
+        });
+
+        let state2 = State::new("a".to_string());
+        state2.subscribe(|value| {
+            println!("subscriber: {}", value);
+            *value += "a";
         });
 
         ViewTree {
             view_base: core::Base::default(),
             state: state.clone(),
-            root: ViewTree::build(state),
+            state2: state2.clone(),
+            root: ViewTree::build(state, state2),
         }
     }
 
     #[rustfmt::skip]
-    fn build(state: Signal<i32>) -> VStack {
+    fn build(state: State<i32>, state2: State<String>) -> VStack {
         VStack::new((
             HStack::new((
                 Rectangle::default()
@@ -191,9 +199,8 @@ impl ViewTree {
                         .fill(Color::rgb8(122, 122, 255))
                         .padding_top(25.0)
                         .padding_left(25.0)
-                        .on_click(core::callback(&state, {
+                        .on_click(core::callback(&state2, {
                             |state| {
-                                *state += 1;
                                 println!("clicked {}", state);
                             }
                         }))
