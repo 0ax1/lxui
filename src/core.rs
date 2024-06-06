@@ -6,7 +6,12 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use lazy_static::lazy_static;
 use vello::kurbo;
 
-pub fn callback<T>(state: &State<T>, f: impl Fn(&mut T)) -> impl Fn() {
+use crate::state;
+
+pub fn callback<T>(state: &State<T>, f: impl Fn(&mut T)) -> impl Fn()
+where
+    T: Clone + 'static,
+{
     let state = state.clone();
 
     move || {
@@ -15,24 +20,31 @@ pub fn callback<T>(state: &State<T>, f: impl Fn(&mut T)) -> impl Fn() {
     }
 }
 
-pub struct State<T> {
+pub struct State<T: 'static + Clone> {
     data: Rc<RefCell<T>>,
     subscribers: Rc<RefCell<std::vec::Vec<Box<dyn FnMut(&mut T)>>>>,
 }
 
-impl<T> State<T> {
+impl<T: Clone + 'static> State<T> {
     pub fn new(value: T) -> Self {
-        State {
-            data: Rc::new(RefCell::new(value)),
-            subscribers: Rc::new(RefCell::default()),
-        }
+        state::STATE_MANAGER.with(|manager| {
+            let mut manager = manager.borrow_mut();
+            if let Some(other) = manager.get_state::<T>(0) {
+                return State {
+                    data: Rc::new(RefCell::new(other)),
+                    subscribers: Rc::new(RefCell::default()),
+                };
+            } else {
+                return State {
+                    data: Rc::new(RefCell::new(value)),
+                    subscribers: Rc::new(RefCell::default()),
+                };
+            }
+        })
     }
 
-    pub fn value(&self) -> T
-    where
-        T: Copy,
-    {
-        *self.data.borrow()
+    pub fn value(&self) -> T {
+        self.data.borrow().clone()
     }
 
     pub fn subscribe<F>(&self, closure: F)
@@ -49,7 +61,16 @@ impl<T> State<T> {
     }
 }
 
-impl<T> std::clone::Clone for State<T> {
+impl<T: 'static + Clone> Drop for State<T> {
+    fn drop(&mut self) {
+        state::STATE_MANAGER.with(|manager| {
+            let mut manager = manager.borrow_mut();
+            manager.set_state(0, self.data.clone().borrow().clone());
+        })
+    }
+}
+
+impl<T: Clone> std::clone::Clone for State<T> {
     fn clone(&self) -> Self {
         State {
             data: self.data.clone(),
@@ -58,7 +79,7 @@ impl<T> std::clone::Clone for State<T> {
     }
 }
 
-impl<T> Deref for State<T> {
+impl<T: Clone> Deref for State<T> {
     type Target = RefCell<T>;
 
     fn deref(&self) -> &Self::Target {
@@ -66,7 +87,7 @@ impl<T> Deref for State<T> {
     }
 }
 
-impl<T> DerefMut for State<T> {
+impl<T: Clone> DerefMut for State<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         Rc::get_mut(&mut self.data).expect("error: multiple references")
     }

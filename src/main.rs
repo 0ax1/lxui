@@ -35,6 +35,7 @@ fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::wind
     )
 }
 
+#[allow(unused_assignments)]
 fn init_runloop() {
     let mut render_cx = vello::util::RenderContext::new().expect("error: creating render context");
     let mut renderers: Vec<Option<vello::Renderer>> = [].into();
@@ -42,8 +43,7 @@ fn init_runloop() {
     let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
 
-    let mut state_tree = ViewTree::new();
-    let mut view_tree = state_tree.f.as_mut()();
+    let mut view_tree = ViewTree::new();
 
     let mut cx = core::Context {
         location: kurbo::Point { x: 0.0, y: 0.0 },
@@ -129,7 +129,9 @@ fn init_runloop() {
                     scene.reset();
                     cx.location = kurbo::Point::default();
 
-                    view_tree = state_tree.rebuild();
+                    view_tree = ViewTree::new();
+                    view_tree = ViewTree::new();
+
                     view_tree.layout(cx);
                     view_tree.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
@@ -143,34 +145,37 @@ fn init_runloop() {
     println!("{:?}", result);
 }
 
-pub struct ViewTree {
-    pub f: Box<dyn FnMut() -> VStack + 'static>,
+pub struct ViewTree;
+
+#[derive(Clone)]
+struct ViewTreeState {
+    pub scale: f64,
+    pub text: String,
 }
 
+// TODO: reset view id count, auto assign id on State::new
+
 impl ViewTree {
-    pub fn new() -> Self {
-        let state = State::new(0.0);
-
-        ViewTree {
-            f: Box::new(move || Self::body(state.clone())),
-        }
-    }
-
-    pub fn rebuild(&mut self) -> VStack {
-        self.f.as_mut()()
+    pub fn new() -> VStack {
+        return Self::body(State::new(ViewTreeState {
+            scale: 0.0,
+            text: "".to_owned(),
+        }));
     }
 
     #[rustfmt::skip]
-    fn body(state: State<f64>) -> VStack {
+    fn body(state: State<ViewTreeState>) -> VStack {
+        let ViewTreeState { scale, text: _ } = state.value();
+
         VStack::new((
             HStack::new((
                 Rectangle::default()
                     .size(100.0, 100.0)
-                    .stroke(Color::rgb8(122, 122, 122), 2.0 * state.value())
+                    .stroke(Color::rgb8(122, 122, 122), 2.0 * scale)
                     .on_click(core::callback(&state, {
                         |state| {
-                            *state += 1.0;
-                            println!("clicked {}", state);
+                            state.scale += 1.0;
+                            println!("clicked {}", state.scale);
                         }
                     })),
 
@@ -179,8 +184,8 @@ impl ViewTree {
                     .diameter(100.0)
                     .on_click(core::callback(&state, {
                         |state| {
-                            *state += 1.0;
-                            println!("clicked {}", state);
+                            state.scale += 1.0;
+                            println!("clicked {}", state.scale);
                         }
                     })),
 
@@ -197,7 +202,8 @@ impl ViewTree {
                         .padding_left(25.0)
                         .on_click(core::callback(&state, {
                             |state| {
-                                println!("clicked {}", state);
+                                state.text += "abcd";
+                                println!("clicked {}", state.text);
                             }
                         })),
                 )),
@@ -231,6 +237,5 @@ impl ViewTree {
 }
 
 fn main() {
-    state::showcase();
     init_runloop();
 }
