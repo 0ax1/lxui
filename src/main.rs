@@ -42,7 +42,6 @@ fn init_runloop() {
     let mut render_state = RenderState::Suspended(None);
     let mut scene = vello::Scene::new();
     let event_loop = EventLoop::new().expect("error: creating runloop");
-
     let mut view_tree = ViewTree::new();
 
     let mut cx = core::Context {
@@ -130,8 +129,6 @@ fn init_runloop() {
                     cx.location = kurbo::Point::default();
 
                     view_tree = ViewTree::new();
-                    view_tree = ViewTree::new();
-
                     view_tree.layout(cx);
                     view_tree.draw(cx, &mut scene);
                     rendering::render(render_state, &render_cx, &scene, &mut renderers);
@@ -158,8 +155,8 @@ struct ViewTreeState {
 impl ViewTree {
     pub fn new() -> VStack {
         return Self::body(State::new(ViewTreeState {
-            scale: 0.0,
-            text: "".to_owned(),
+            scale: f64::default(),
+            text: String::default(),
         }));
     }
 

@@ -17,6 +17,11 @@ where
     move || {
         f(&mut state.borrow_mut());
         state.notify();
+
+        state::STATE_MANAGER.with(|manager| {
+            let mut manager = manager.borrow_mut();
+            manager.set_state(0, state.data.clone().borrow().clone());
+        })
     }
 }
 
@@ -58,15 +63,6 @@ impl<T: Clone + 'static> State<T> {
         for subscriber in self.subscribers.borrow_mut().iter_mut() {
             subscriber(&mut self.data.borrow_mut());
         }
-    }
-}
-
-impl<T: 'static + Clone> Drop for State<T> {
-    fn drop(&mut self) {
-        state::STATE_MANAGER.with(|manager| {
-            let mut manager = manager.borrow_mut();
-            manager.set_state(0, self.data.clone().borrow().clone());
-        })
     }
 }
 
