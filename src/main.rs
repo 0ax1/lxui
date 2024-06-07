@@ -128,6 +128,10 @@ fn init_runloop() {
                     scene.reset();
                     cx.location = kurbo::Point::default();
 
+                    state::STATE_MANAGER.with(|manager| {
+                        manager.borrow_mut().reset_id();
+                    });
+
                     view_tree = ViewTree::new();
                     view_tree.layout(cx);
                     view_tree.draw(cx, &mut scene);
@@ -149,8 +153,6 @@ struct ViewTreeState {
     pub scale: f64,
     pub text: String,
 }
-
-// TODO: reset view id count, auto assign id on State::new
 
 impl ViewTree {
     pub fn new() -> VStack {
