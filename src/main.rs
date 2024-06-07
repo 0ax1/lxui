@@ -154,22 +154,24 @@ struct ViewTreeState {
 
 impl ViewTree {
     pub fn new() -> VStack {
-        return Self::body(State::new(ViewTreeState {
-            scale: f64::default(),
+        let state = state::State::new(ViewTreeState {
+            scale: 1.0,
             text: String::default(),
-        }));
+        });
+
+        return Self::body(state);
     }
 
     #[rustfmt::skip]
-    fn body(state: State<ViewTreeState>) -> VStack {
-        let ViewTreeState { scale, text: _ } = state.value();
+    fn body(state: state::State<ViewTreeState>) -> VStack {
+        let ViewTreeState { scale, .. } = state.value();
 
         VStack::new((
             HStack::new((
                 Rectangle::default()
                     .size(100.0, 100.0)
                     .stroke(Color::rgb8(122, 122, 122), 2.0 * scale)
-                    .on_click(core::callback(&state, {
+                    .on_click(state::callback(&state, {
                         |state| {
                             state.scale += 1.0;
                             println!("clicked {}", state.scale);
@@ -179,7 +181,7 @@ impl ViewTree {
                 Circle::default()
                     .stroke(Color::rgb8(255, 255, 255), 4.0)
                     .diameter(100.0)
-                    .on_click(core::callback(&state, {
+                    .on_click(state::callback(&state, {
                         |state| {
                             state.scale += 1.0;
                             println!("clicked {}", state.scale);
@@ -197,7 +199,7 @@ impl ViewTree {
                         .fill(Color::rgb8(122, 122, 255))
                         .padding_top(25.0)
                         .padding_left(25.0)
-                        .on_click(core::callback(&state, {
+                        .on_click(state::callback(&state, {
                             |state| {
                                 state.text += "abcd";
                                 println!("clicked {}", state.text);

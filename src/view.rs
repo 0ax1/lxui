@@ -26,7 +26,7 @@ impl core::Draw for Loop {
     fn draw(&self, _: core::Context, _: &mut vello::Scene) {}
 }
 
-pub trait Stack: ViewBase {
+pub trait Stack: BaseFields {
     fn elements(&self) -> &[Box<dyn core::AnyView>];
 
     // Given that the root view is a container and always drawn,

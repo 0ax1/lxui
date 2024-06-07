@@ -72,7 +72,7 @@ pub fn derive_view_base(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl ViewBase for #name {
+        impl BaseFields for #name {
             fn rect(&self) -> vello::kurbo::Rect {
                 let origin = self.view_base.origin.get();
                 vello::kurbo::Rect {
