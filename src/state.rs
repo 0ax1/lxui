@@ -56,7 +56,7 @@ where
 
         STATE_MANAGER.with(|manager| {
             let mut manager = manager.borrow_mut();
-            manager.set_state(state.id, state.data.clone().borrow().clone());
+            manager.set_state(state.id, state.data.borrow().clone());
         })
     }
 }
