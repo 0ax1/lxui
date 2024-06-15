@@ -26,7 +26,7 @@ fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::wind
         .with_inner_size(LogicalSize::new(600, 600))
         .with_resizable(true)
         .with_active(true)
-        .with_title("fors: gpu go brr");
+        .with_title("gpu go brr");
 
     std::sync::Arc::new(
         event_loop
