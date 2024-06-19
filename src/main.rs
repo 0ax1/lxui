@@ -37,7 +37,7 @@ fn init_winit_window(event_loop: &ActiveEventLoop) -> std::sync::Arc<winit::wind
 
 #[allow(unused_assignments)]
 fn init_runloop() {
-    let mut render_cx = vello::util::RenderContext::new().expect("error: creating render context");
+    let mut render_cx = vello::util::RenderContext::new();
     let mut renderers: Vec<Option<vello::Renderer>> = [].into();
     let mut render_state = RenderState::Suspended(None);
     let mut scene = vello::Scene::new();
